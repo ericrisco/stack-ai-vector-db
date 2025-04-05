@@ -89,3 +89,54 @@ Run the container:
 ```bash
 docker run -p 8000:8000 stack-ai-vector-db
 ```
+
+## Testing
+
+### Running Database Tests
+
+The project includes comprehensive tests for the database layer. To run these tests:
+
+1. Make sure you have activated your virtual environment:
+
+```bash
+source venv/bin/activate
+```
+
+2. Run all tests:
+
+```bash
+python -m pytest
+```
+
+3. Run specific test files:
+
+```bash
+# Test chunk database operations
+python -m pytest tests/database/test_chunk_db.py
+
+# Test document database operations
+python -m pytest tests/database/test_document_db.py
+
+# Test library database operations
+python -m pytest tests/database/test_library_db.py
+```
+
+4. Run tests with detailed output:
+
+```bash
+python -m pytest -xvs
+```
+
+Where:
+- `-x`: Stop after first failure
+- `-v`: Verbose output
+- `-s`: Show print statements during test execution
+
+### Test Coverage
+
+The database tests cover:
+- CRUD operations for Chunks, Documents, and Libraries
+- Relationship integrity between entities
+- Cascading delete operations
+- Error handling for invalid operations
+- Edge cases and validation

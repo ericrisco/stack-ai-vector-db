@@ -7,9 +7,9 @@ class DB:
         self.libraries: Dict[UUID, Dict] = {}
         self.documents: Dict[UUID, Dict] = {}
         self.chunks: Dict[UUID, Dict] = {}
-        self.library_lock = threading.Lock()
-        self.document_lock = threading.Lock()
-        self.chunk_lock = threading.Lock()
+        self.library_lock = threading.RLock()
+        self.document_lock = threading.RLock()
+        self.chunk_lock = threading.RLock()
         
         # Track relationships
         self.document_library_map: Dict[UUID, UUID] = {}  # document_id -> library_id
