@@ -13,7 +13,6 @@ A FastAPI service for vector database operations.
 │   ├── database/         # Database connections and queries
 │   └── indexer/          # Vector indexing functionality
 ├── tests/                # Unit tests
-│   └── routers/          # Router tests
 ├── Dockerfile            # Container definition
 ├── helmchart/            # Kubernetes Helm chart
 └── requirements.txt      # Python dependencies
