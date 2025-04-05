@@ -6,5 +6,6 @@ from app.models.chunk import Chunk
 class Document(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     library_id: UUID
+    name: str
     chunks: List[Chunk] = []
     metadata: Dict[str, str] 
