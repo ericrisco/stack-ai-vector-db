@@ -121,7 +121,24 @@ python -m pytest tests/database/test_document_db.py
 python -m pytest tests/database/test_library_db.py
 ```
 
-4. Run tests with detailed output:
+### Running Service Tests
+
+The project also includes tests for the service layer, which verify that services correctly use the database layer:
+
+```bash
+# Test chunk service operations
+python -m pytest tests/services/test_chunk_service.py
+
+# Test document service operations
+python -m pytest tests/services/test_document_service.py
+
+# Test library service operations
+python -m pytest tests/services/test_library_service.py
+```
+
+### Verbose Test Output
+
+Run tests with detailed output:
 
 ```bash
 python -m pytest -xvs
@@ -134,9 +151,10 @@ Where:
 
 ### Test Coverage
 
-The database tests cover:
+The tests cover:
 - CRUD operations for Chunks, Documents, and Libraries
 - Relationship integrity between entities
 - Cascading delete operations
 - Error handling for invalid operations
 - Edge cases and validation
+- Service-layer business logic and validations
