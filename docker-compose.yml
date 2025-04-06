@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  vector-db:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - vector_db_data:/app/data
+    environment:
+      - DATA_DIR=/app/data
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - TESTING_DATA=${TESTING_DATA:-false}
+
+volumes:
+  vector_db_data:
+    driver: local 

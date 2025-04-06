@@ -2,12 +2,26 @@ from typing import List, Optional, Dict
 from uuid import UUID
 from app.models.chunk import Chunk
 from app.database.db import get_db
+from app.database.persistence import save_library
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_chunk(chunk: Chunk) -> Chunk:
     """
     Create a new chunk in the database
     """
     db = get_db()
+    
+    # Track the document and library for persistence
+    document_id = chunk.document_id
+    library_id = None
+    
+    if document_id:
+        with db.document_lock:
+            if document_id in db.document_library_map:
+                library_id = db.document_library_map[document_id]
+    
     with db.chunk_lock:
         # Check if chunk with this ID already exists
         if chunk.id in db.chunks:
@@ -23,8 +37,12 @@ def create_chunk(chunk: Chunk) -> Chunk:
         # Track the relationship if document_id is provided
         if chunk.document_id is not None:
             db.chunk_document_map[chunk.id] = chunk.document_id
+    
+    # Save to persistent storage
+    if library_id:
+        save_library(library_id)
         
-        return chunk
+    return chunk
 
 def get_chunk(chunk_id: UUID) -> Optional[Chunk]:
     """
@@ -62,6 +80,20 @@ def update_chunk(chunk_id: UUID, chunk_data: Dict) -> Optional[Chunk]:
     Update an existing chunk
     """
     db = get_db()
+    
+    # Track the document and library for persistence
+    document_id = None
+    library_id = None
+    
+    with db.chunk_lock:
+        if chunk_id in db.chunk_document_map:
+            document_id = db.chunk_document_map[chunk_id]
+    
+    if document_id:
+        with db.document_lock:
+            if document_id in db.document_library_map:
+                library_id = db.document_library_map[document_id]
+    
     with db.chunk_lock:
         if chunk_id not in db.chunks:
             return None
@@ -81,14 +113,32 @@ def update_chunk(chunk_id: UUID, chunk_data: Dict) -> Optional[Chunk]:
         
         # Store back to the database
         db.chunks[chunk_id] = updated_chunk.model_dump()
+    
+    # Save to persistent storage
+    if library_id:
+        save_library(library_id)
         
-        return updated_chunk
+    return updated_chunk
 
 def delete_chunk(chunk_id: UUID) -> bool:
     """
     Delete a chunk by ID
     """
     db = get_db()
+    
+    # Track the document and library for persistence
+    document_id = None
+    library_id = None
+    
+    with db.chunk_lock:
+        if chunk_id in db.chunk_document_map:
+            document_id = db.chunk_document_map[chunk_id]
+    
+    if document_id:
+        with db.document_lock:
+            if document_id in db.document_library_map:
+                library_id = db.document_library_map[document_id]
+    
     with db.chunk_lock:
         if chunk_id not in db.chunks:
             return False
@@ -99,8 +149,12 @@ def delete_chunk(chunk_id: UUID) -> bool:
         # Remove the relationship
         if chunk_id in db.chunk_document_map:
             del db.chunk_document_map[chunk_id]
+    
+    # Save to persistent storage
+    if library_id:
+        save_library(library_id)
             
-        return True
+    return True
 
 def delete_chunks_by_document(document_id: UUID) -> int:
     """
@@ -108,6 +162,14 @@ def delete_chunks_by_document(document_id: UUID) -> int:
     Returns the number of chunks deleted
     """
     db = get_db()
+    
+    # Track the library for persistence
+    library_id = None
+    
+    with db.document_lock:
+        if document_id in db.document_library_map:
+            library_id = db.document_library_map[document_id]
+    
     with db.chunk_lock:
         # Find all chunks belonging to this document
         chunk_ids = [
@@ -122,5 +184,9 @@ def delete_chunks_by_document(document_id: UUID) -> int:
             
             # Remove relationship
             del db.chunk_document_map[chunk_id]
+        
+        # Save to persistent storage
+        if library_id and chunk_ids:
+            save_library(library_id)
         
         return len(chunk_ids) 

@@ -268,7 +268,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/libraries/{{library_id}}/search?query_text=military&top_k=5",
+							"raw": "{{base_url}}/api/libraries/{{library_id}}/search?query_text=Where are the main shopping in Andorra?&top_k=5",
 							"host": [
 								"{{base_url}}"
 							],
@@ -281,7 +281,7 @@
 							"query": [
 								{
 									"key": "query_text",
-									"value": "military",
+									"value": "Where are the main shopping in Andorra?",
 									"description": "The text to search for"
 								},
 								{

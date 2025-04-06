@@ -24,6 +24,13 @@ from app.database.library_db import (
     update_library,
     delete_library
 )
+from app.database.persistence import (
+    save_library,
+    load_library,
+    load_all_libraries,
+    load_library_from_file,
+    get_library_file_path
+)
 
 __all__ = [
     # Database
@@ -49,5 +56,11 @@ __all__ = [
     "get_library",
     "get_all_libraries",
     "update_library",
-    "delete_library"
+    "delete_library",
+    # Persistence operations
+    "save_library",
+    "load_library",
+    "load_all_libraries",
+    "load_library_from_file",
+    "get_library_file_path"
 ] 
