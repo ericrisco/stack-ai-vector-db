@@ -301,6 +301,35 @@ The application uses JSON file-based persistence:
        yield
    ```
 
+### Advantages and Disadvantages of JSON Persistence
+
+#### Advantages
+- **Simplicity**: Easy to implement and understand with no external dependencies
+- **Human Readable**: JSON files can be inspected and edited manually if needed
+- **Portability**: Files can be easily backed up, transferred, or shared
+- **No Database Setup**: No need to install and configure a separate database system
+- **Direct Mapping**: Straightforward serialization of the in-memory data structures
+- **Library Isolation**: Each library's data is isolated in its own file, preventing cross-contamination
+
+#### Disadvantages
+- **Performance**: Not optimized for high-frequency writes or large datasets
+- **Atomicity**: No built-in transaction support, could lead to data corruption during crashes
+- **Scalability**: Limited ability to scale as dataset size increases (entire file must be read/written)
+- **Query Capabilities**: No query language or filtering capabilities like SQL databases
+- **Concurrency**: Limited support for concurrent access compared to dedicated databases
+- **Memory Usage**: Requires loading entire libraries into memory
+
+### Intended Use Case
+
+This JSON persistence approach is best suited for:
+- Development and testing environments
+- Small to medium-sized datasets
+- Applications with low to moderate write frequency
+- Scenarios where simplicity is valued over high performance
+- Use cases where data can fit comfortably in memory
+
+For production use with very large datasets or high concurrency requirements, consider replacing the JSON persistence with a dedicated database system while maintaining the same API.
+
 ## Testing
 
 The project includes a comprehensive test suite:
