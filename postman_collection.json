@@ -1,756 +1,755 @@
 {
-  "info": {
-    "name": "Stack AI Vector DB API",
-    "description": "API collection for testing the Stack AI Vector DB API, including library management, indexing and search functionality",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Libraries",
-      "description": "Endpoints for managing libraries",
-      "item": [
-        {
-          "name": "Create Library",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Library\",\n  \"metadata\": {\n    \"source\": \"Postman Test\",\n    \"created_by\": \"API Test\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/libraries",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries"
-              ]
-            },
-            "description": "Create a new library."
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Libraries",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/libraries",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries"
-              ]
-            },
-            "description": "Get a list of all libraries."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Library by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/libraries/{{library_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries",
-                "{{library_id}}"
-              ]
-            },
-            "description": "Get details of a specific library."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Library",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Library Name\",\n  \"metadata\": {\n    \"updated\": true,\n    \"updated_at\": \"{{$timestamp}}\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/libraries/{{library_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries",
-                "{{library_id}}"
-              ]
-            },
-            "description": "Update a library's metadata."
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Library",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/libraries/{{library_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries",
-                "{{library_id}}"
-              ]
-            },
-            "description": "Delete a library and all its associated documents and chunks."
-          },
-          "response": []
-        },
-        {
-          "name": "Start Indexing (BruteForce)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"indexer_type\": \"BRUTE_FORCE\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/libraries/{{library_id}}/index",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries",
-                "{{library_id}}",
-                "index"
-              ]
-            },
-            "description": "Start indexing a library using the BruteForce indexer."
-          },
-          "response": []
-        },
-        {
-          "name": "Start Indexing (BallTree)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"indexer_type\": \"BALL_TREE\",\n  \"leaf_size\": 30\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/libraries/{{library_id}}/index",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries",
-                "{{library_id}}",
-                "index"
-              ]
-            },
-            "description": "Start indexing a library using the BallTree indexer with a custom leaf size."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Indexing Status",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/libraries/{{library_id}}/index/status",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries",
-                "{{library_id}}",
-                "index",
-                "status"
-              ]
-            },
-            "description": "Get the current indexing status of a library."
-          },
-          "response": []
-        },
-        {
-          "name": "Search Library",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/libraries/{{library_id}}/search?query_text=test query&top_k=5",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "libraries",
-                "{{library_id}}",
-                "search"
-              ],
-              "query": [
-                {
-                  "key": "query_text",
-                  "value": "test query",
-                  "description": "The text to search for"
-                },
-                {
-                  "key": "top_k",
-                  "value": "5",
-                  "description": "Number of results to return"
-                }
-              ]
-            },
-            "description": "Search for content in an indexed library."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Documents",
-      "description": "Endpoints for managing documents within libraries",
-      "item": [
-        {
-          "name": "Create Document",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Document\",\n  \"library_id\": \"{{library_id}}\",\n  \"metadata\": {\n    \"source\": \"Postman Test\",\n    \"created_at\": \"{{$timestamp}}\"\n  },\n  \"chunks\": [\n    {\n      \"text\": \"This is the first chunk of test content. It contains information about testing APIs.\",\n      \"metadata\": {\n        \"position\": \"1\"\n      }\n    },\n    {\n      \"text\": \"This is the second chunk of test content. It contains more detailed information about vector databases.\",\n      \"metadata\": {\n        \"position\": \"2\"\n      }\n    },\n    {\n      \"text\": \"This is the third chunk, which talks about embeddings and how they are generated from text.\",\n      \"metadata\": {\n        \"position\": \"3\"\n      }\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/documents",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "documents"
-              ]
-            },
-            "description": "Create a new document with chunks in a library."
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Documents",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/documents",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "documents"
-              ]
-            },
-            "description": "Get all documents in the system."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Documents by Library",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/documents/library/{{library_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "documents",
-                "library",
-                "{{library_id}}"
-              ]
-            },
-            "description": "Get all documents in a specific library."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Document by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/documents/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "documents",
-                "{{document_id}}"
-              ]
-            },
-            "description": "Get details of a specific document."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Document",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Document Name\",\n  \"metadata\": {\n    \"updated\": true,\n    \"updated_at\": \"{{$timestamp}}\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/documents/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "documents",
-                "{{document_id}}"
-              ]
-            },
-            "description": "Update a document's metadata (note: cannot update document chunks through this endpoint)."
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Document",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/documents/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "documents",
-                "{{document_id}}"
-              ]
-            },
-            "description": "Delete a document and all its chunks."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Chunks",
-      "description": "Endpoints for managing chunks within documents",
-      "item": [
-        {
-          "name": "Create Chunk",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"document_id\": \"{{document_id}}\",\n  \"text\": \"This is a test chunk content.\",\n  \"metadata\": {\n    \"position\": \"1\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/chunks",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "chunks"
-              ]
-            },
-            "description": "Create a new chunk for an existing document."
-          },
-          "response": []
-        },
-        {
-          "name": "Create Multiple Chunks",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "[\n  {\n    \"document_id\": \"{{document_id}}\",\n    \"text\": \"This is the first test chunk content.\",\n    \"metadata\": {\n      \"position\": \"1\"\n    }\n  },\n  {\n    \"document_id\": \"{{document_id}}\",\n    \"text\": \"This is the second test chunk content.\",\n    \"metadata\": {\n      \"position\": \"2\"\n    }\n  }\n]"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/chunks/batch",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "chunks",
-                "batch"
-              ]
-            },
-            "description": "Create multiple chunks in a single request."
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Chunks",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/chunks",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "chunks"
-              ]
-            },
-            "description": "Get all chunks in the system."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Chunks by Document",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/chunks/document/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "chunks",
-                "document",
-                "{{document_id}}"
-              ]
-            },
-            "description": "Get all chunks in a specific document."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Chunk by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/chunks/{{chunk_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "chunks",
-                "{{chunk_id}}"
-              ]
-            },
-            "description": "Get details of a specific chunk."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Chunk",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"text\": \"Updated chunk content.\",\n  \"metadata\": {\n    \"updated\": true,\n    \"position\": \"1\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/chunks/{{chunk_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "chunks",
-                "{{chunk_id}}"
-              ]
-            },
-            "description": "Update a chunk's content or metadata."
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Chunk",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "X-API-Version",
-                "value": "1.0",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/chunks/{{chunk_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "chunks",
-                "{{chunk_id}}"
-              ]
-            },
-            "description": "Delete a specific chunk."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Health Check",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/health",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "health"
-          ]
-        },
-        "description": "Check if the API is running."
-      },
-      "response": []
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          ""
-        ]
-      }
-    }
-  ],
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:8000",
-      "type": "string"
-    },
-    {
-      "key": "library_id",
-      "value": "",
-      "type": "string",
-      "description": "Set this to the ID of a library after creating one"
-    },
-    {
-      "key": "document_id",
-      "value": "",
-      "type": "string",
-      "description": "Set this to the ID of a document after creating one"
-    },
-    {
-      "key": "chunk_id",
-      "value": "",
-      "type": "string",
-      "description": "Set this to the ID of a chunk after retrieving document chunks"
-    }
-  ]
-} 
+	"info": {
+		"_postman_id": "def3a228-cc6d-4dcc-99c2-f5db34cdac15",
+		"name": "Stack AI Vector DB API",
+		"description": "API collection for testing the Stack AI Vector DB API, including library management, indexing and search functionality",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "22419297"
+	},
+	"item": [
+		{
+			"name": "Libraries",
+			"item": [
+				{
+					"name": "Create Library",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Stack-AI Testing Library\",\n  \"metadata\": {\n    \"source\": \"Postman\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/libraries",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries"
+							]
+						},
+						"description": "Create a new library."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Libraries",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/libraries",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries"
+							]
+						},
+						"description": "Get a list of all libraries."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Library by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/libraries/{{library_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries",
+								"{{library_id}}"
+							]
+						},
+						"description": "Get details of a specific library."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Library",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Stack-AI Library Updated\",\n  \"metadata\": {\n    \"updated\": true,\n    \"updated_at\": \"{{$timestamp}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/libraries/{{library_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries",
+								"{{library_id}}"
+							]
+						},
+						"description": "Update a library's metadata."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Library",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/libraries/{{library_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries",
+								"{{library_id}}"
+							]
+						},
+						"description": "Delete a library and all its associated documents and chunks."
+					},
+					"response": []
+				},
+				{
+					"name": "Start Indexing (BruteForce)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"indexer_type\": \"BRUTE_FORCE\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/libraries/{{library_id}}/index",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries",
+								"{{library_id}}",
+								"index"
+							]
+						},
+						"description": "Start indexing a library using the BruteForce indexer."
+					},
+					"response": []
+				},
+				{
+					"name": "Start Indexing (BallTree)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"indexer_type\": \"BALL_TREE\",\n  \"leaf_size\": 30\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/libraries/{{library_id}}/index",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries",
+								"{{library_id}}",
+								"index"
+							]
+						},
+						"description": "Start indexing a library using the BallTree indexer with a custom leaf size."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Indexing Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/libraries/{{library_id}}/index/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries",
+								"{{library_id}}",
+								"index",
+								"status"
+							]
+						},
+						"description": "Get the current indexing status of a library."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Library",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/libraries/{{library_id}}/search?query_text=military&top_k=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"libraries",
+								"{{library_id}}",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query_text",
+									"value": "military",
+									"description": "The text to search for"
+								},
+								{
+									"key": "top_k",
+									"value": "5",
+									"description": "Number of results to return"
+								}
+							]
+						},
+						"description": "Search for content in an indexed library."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing libraries"
+		},
+		{
+			"name": "Documents",
+			"item": [
+				{
+					"name": "Create Document",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Andorra\",\n  \"library_id\": \"{{library_id}}\",\n  \"metadata\": {\n    \"source\": \"Wikipedia\",\n    \"created_at\": \"{{$timestamp}}\"\n  },\n  \"chunks\": [\n    {\n      \"text\": \"Andorra is a tiny, independent principality situated between France and Spain in the Pyrenees mountains. It’s known for its ski resorts and a tax-haven status that encourages duty-free shopping.\",\n      \"metadata\": {\n        \"position\": \"1\"\n      }\n    },\n    {\n      \"text\": \"Capital Andorra la Vella has boutiques and jewelers on Meritxell Avenue and several shopping centers. The old quarter, Barri Antic, houses Romanesque Santa Coloma Church, with a circular bell tower.\",\n      \"metadata\": {\n        \"position\": \"2\"\n      }\n    },\n    {\n      \"text\": \"Andorra claims it is the last independent survivor of the Marca Hispanica, a military buffer zone made up of counties, created by Charlemagne to keep the Islamic Moors from advancing into the Christian Frankish empire.[2] Tradition holds that Charlemagne granted a charter to the Andorran people in return for fighting the Moors.[2] In the 9th century, Charlemagne's grandson, Charles the Bald, named the Count of Urgell as overlord of Andorra.[2] A descendant of the count later gave the lands to the Diocese of Urgell.[2]\",\n      \"metadata\": {\n        \"position\": \"3\"\n      }\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/documents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents"
+							]
+						},
+						"description": "Create a new document with chunks in a library."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents"
+							]
+						},
+						"description": "Get all documents in the system."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Documents by Library",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/library/{{library_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"library",
+								"{{library_id}}"
+							]
+						},
+						"description": "Get all documents in a specific library."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Document by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/{{document_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{document_id}}"
+							]
+						},
+						"description": "Get details of a specific document."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Document",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Document Name\",\n  \"metadata\": {\n    \"updated\": true,\n    \"updated_at\": \"{{$timestamp}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/documents/{{document_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{document_id}}"
+							]
+						},
+						"description": "Update a document's metadata (note: cannot update document chunks through this endpoint)."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Document",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/{{document_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{document_id}}"
+							]
+						},
+						"description": "Delete a document and all its chunks."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing documents within libraries"
+		},
+		{
+			"name": "Chunks",
+			"item": [
+				{
+					"name": "Create Chunk",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"document_id\": \"{{document_id}}\",\n  \"text\": \"Andorra formally became a parliamentary democracy in May 1993 following approval of a new constitution by a popular referendum in March 1993. The new constitution retained the French and Spanish co-princes although with reduced and narrowly defined powers. Civil rights were greatly expanded, including the legalisation of political parties and the provision for an independent judiciary\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chunks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chunks"
+							]
+						},
+						"description": "Create a new chunk for an existing document."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Multiple Chunks",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  {\n    \"document_id\": \"{{document_id}}\",\n    \"text\": \"Andorra joined a customs union with the European Communities (now the European Union) in 1991 and was admitted to the United Nations on 28 July 1993.[16] It became a member of the Council of Europe in 1994. Andorra opened diplomatic relations with other countries such as the United Kingdom in 1994 and the United States in 1995.\"\n  },\n  {\n    \"document_id\": \"{{document_id}}\",\n    \"text\": \"The country has been seeking ways to improve its export potential and increase its economic ties with its European neighbours. The financial services sector of the economy is highly important because of Andorra's status as a tax haven and its banking secrecy laws.[13]\"\n  }\n]"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chunks/batch",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chunks",
+								"batch"
+							]
+						},
+						"description": "Create multiple chunks in a single request."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Chunks",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chunks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chunks"
+							]
+						},
+						"description": "Get all chunks in the system."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chunks by Document",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chunks/document/{{document_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chunks",
+								"document",
+								"{{document_id}}"
+							]
+						},
+						"description": "Get all chunks in a specific document."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chunk by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chunks/{{chunk_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chunks",
+								"{{chunk_id}}"
+							]
+						},
+						"description": "Get details of a specific chunk."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Chunk",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"text\": \"Andorra did not officially participate in World War I,[4] although there were three Andorran volunteers who fought: Valentí Naudi, Josep Estany and René Huguet.[5] North American newspapers in 1958 claimed that Andorra had declared war on Germany in 1914 but failed to sign a peace treaty until 1958,[6][7] and this claim has appeared in later sources,[8] but there appears to be no contemporary evidence of such declaration\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chunks/{{chunk_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chunks",
+								"{{chunk_id}}"
+							]
+						},
+						"description": "Update a chunk's content or metadata."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Chunk",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-API-Version",
+								"value": "1.0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chunks/{{chunk_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"chunks",
+								"{{chunk_id}}"
+							]
+						},
+						"description": "Delete a specific chunk."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing chunks within documents"
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Check if the API is running."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "library_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "document_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "chunk_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
