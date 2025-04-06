@@ -93,6 +93,57 @@ Expected response:
 {"status": "ok"}
 ```
 
+## Library Indexing and Search
+
+The application supports indexing libraries and performing semantic searches directly through the API. This feature maintains the indexing state of each library and ensures searches only work on properly indexed libraries.
+
+### Indexing a Library
+
+To index a library:
+
+```bash
+curl -X POST "http://localhost:8000/api/libraries/{library_id}/index" \
+  -H "X-API-Version: 1.0" \
+  -H "Content-Type: application/json" \
+  -d '{"indexer_type": "BALL_TREE", "leaf_size": 40}'
+```
+
+Parameters:
+- `indexer_type`: Either "BRUTE_FORCE" or "BALL_TREE"
+- `leaf_size`: Size of leaf nodes for Ball Tree indexer (optional, default: 40)
+
+### Checking Indexing Status
+
+To check the indexing status of a library:
+
+```bash
+curl -X GET "http://localhost:8000/api/libraries/{library_id}/index/status" \
+  -H "X-API-Version: 1.0"
+```
+
+### Searching in a Library
+
+To search for content in an indexed library:
+
+```bash
+curl -X POST "http://localhost:8000/api/libraries/{library_id}/search" \
+  -H "X-API-Version: 1.0" \
+  -H "Content-Type: application/json" \
+  -d '{"query_text": "Your search query", "top_k": 5}'
+```
+
+Parameters:
+- `query_text`: The text to search for
+- `top_k`: Number of results to return (optional, default: 5)
+
+### Library Indexing Lifecycle
+
+1. A new library starts with `indexed: false` and `indexing_in_progress: false`
+2. When you start indexing, the library transitions to `indexed: false` and `indexing_in_progress: true`
+3. After successful indexing, the library becomes `indexed: true` and `indexing_in_progress: false`
+4. Any modifications to the library's documents or chunks automatically mark it as `indexed: false`
+5. You can only perform searches on libraries that are fully indexed (`indexed: true`)
+
 ## Wikipedia Demo
 
 The application includes a demo that showcases how to use the vector database and indexing functionality with real-world content from Wikipedia.
@@ -104,21 +155,25 @@ The Wikipedia demo:
 1. Downloads articles about Andorra from Wikipedia using the Wikipedia API
 2. Creates a library and documents in the vector database
 3. Splits the article content into small text chunks
-4. Generates vector embeddings for each chunk using Cohere's API
-5. Indexes all chunks using the BruteForce indexer
-6. Performs sample searches to find relevant information
+4. Indexes all chunks using the selected indexer, generating embeddings during indexing
+5. Performs sample searches to find relevant information
 
 ### Running the Demo
 
 To run the Wikipedia demo:
 
 ```bash
+# Using Brute Force indexer
 python3 -m app.demo.wikipedia_demo --indexer brute_force --chunk-size 150
+
+# Using Ball Tree indexer with custom leaf size
+python3 -m app.demo.wikipedia_demo --indexer ball_tree --chunk-size 150 --leaf-size 30
 ```
 
 Parameters:
-- `--indexer`: The vector indexer to use (currently only "brute_force" is supported)
+- `--indexer`: The vector indexer to use ("brute_force" or "ball_tree")
 - `--chunk-size`: The size of text chunks to create (default: 150 characters)
+- `--leaf-size`: The maximum size of leaf nodes in the Ball Tree (default: 40)
 
 ### Prerequisites for the Demo
 
@@ -146,6 +201,9 @@ The API is versioned using the `X-API-Version` header. Current version is `1.0`.
 - `GET /api/libraries/{library_id}` - Get a specific library
 - `PATCH /api/libraries/{library_id}` - Update a library
 - `DELETE /api/libraries/{library_id}` - Delete a library
+- `POST /api/libraries/{library_id}/index` - Start indexing a library
+- `GET /api/libraries/{library_id}/index/status` - Get library indexing status
+- `POST /api/libraries/{library_id}/search` - Search for content in an indexed library
 
 ### Document Endpoints
 - `POST /api/documents` - Create a new document
@@ -165,6 +223,35 @@ The API is versioned using the `X-API-Version` header. Current version is `1.0`.
 - `DELETE /api/chunks/{chunk_id}` - Delete a chunk
 
 ## Services
+
+### Library Service
+
+The LibraryService provides methods for managing libraries, including indexing and searching:
+
+```python
+from app.services.library_service import LibraryService
+from uuid import UUID
+
+# Create a library
+library = LibraryService.create_library(library)
+
+# Start indexing a library
+result = await LibraryService.start_indexing_library(
+    library_id=UUID("your-library-id"),
+    indexer_type="BALL_TREE",
+    leaf_size=40
+)
+
+# Check indexing status
+status = LibraryService.get_indexing_status(UUID("your-library-id"))
+
+# Search in an indexed library
+results = await LibraryService.search_library(
+    library_id=UUID("your-library-id"),
+    query_text="Your search query",
+    top_k=5
+)
+```
 
 ### Embedding Service
 
@@ -199,24 +286,55 @@ The application includes vector indexers for efficient similarity search:
 
 The BruteForce indexer is a simple implementation that compares query vectors with all indexed vectors. It's suitable for small libraries or as a baseline for comparison.
 
-Usage example:
+### Ball Tree Indexer
+
+The Ball Tree indexer organizes vectors in a hierarchical tree structure of nested hyperspheres, allowing for more efficient nearest neighbor searches with O(log n) complexity in the average case. It's especially efficient for higher-dimensional spaces and larger datasets.
+
+### Using Indexers via the Library Service
+
+The recommended way to use indexers is through the LibraryService, which manages the indexing state:
 
 ```python
-from app.indexer import BruteForceIndexer
+# Start indexing with BruteForce indexer
+await LibraryService.start_indexing_library(
+    library_id=UUID("your-library-id"),
+    indexer_type="BRUTE_FORCE"
+)
 
-# Initialize the indexer
-indexer = BruteForceIndexer()
+# Start indexing with BallTree indexer
+await LibraryService.start_indexing_library(
+    library_id=UUID("your-library-id"),
+    indexer_type="BALL_TREE",
+    leaf_size=40
+)
 
-# Index a library
-stats = await indexer.index_library(library_id)
-
-# Search for similar content
-results = await indexer.search(
-    text="Your search query",
-    library_id=library_id,
+# Search an indexed library
+results = await LibraryService.search_library(
+    library_id=UUID("your-library-id"),
+    query_text="Your search query",
     top_k=5
 )
 ```
+
+#### Ball Tree Structure
+
+The Ball Tree organizes points in a binary tree where:
+- Each node represents a "ball" (hypersphere) containing a subset of the points
+- The root node contains all points
+- Each non-leaf node has two children that partition its points
+- Leaf nodes contain at most `leaf_size` points
+- The tree supports efficient nearest neighbor searches by pruning large portions of the search space
+
+#### Performance Comparison
+
+When comparing the Ball Tree indexer with the Brute Force indexer:
+
+- **Indexing Time**: Similar for small datasets, Ball Tree may take slightly longer to build the tree structure
+- **Search Time**: Ball Tree performs faster and more consistent searches, especially as the dataset grows
+- **Memory Usage**: Ball Tree requires additional memory to store the tree structure
+- **Scalability**: Ball Tree scales better with O(log n) average search complexity vs O(n) for Brute Force
+
+For small datasets (hundreds of vectors), both indexers perform well, but as the data grows to thousands or millions of vectors, the Ball Tree indexer offers significant performance advantages.
 
 ## Docker
 
@@ -305,13 +423,8 @@ python -m pytest tests/indexer
 
 # Test specific indexers
 python -m pytest tests/indexer/test_brute_force_indexer.py
+python -m pytest tests/indexer/test_ball_tree_indexer.py
 ```
-
-The BruteForce indexer tests verify:
-- Correct indexer name and metadata
-- Library indexing functionality
-- Search functionality with results
-- Handling of empty or non-existent libraries
 
 ### Embedding Live Tests
 
@@ -338,3 +451,31 @@ Where:
 - `-x`: Stop after first failure
 - `-v`: Verbose output
 - `-s`: Show print statements during test execution
+
+## Postman Collection
+
+Para probar la API de Stack AI Vector DB, puedes importar la colección de Postman incluida en este repositorio:
+
+1. Abre Postman
+2. Haz clic en "Import" en la esquina superior izquierda
+3. Selecciona el archivo `postman_collection.json` de este repositorio
+4. La colección "Stack AI Vector DB API" estará disponible en tu espacio de trabajo
+
+### Variables de entorno
+
+La colección usa las siguientes variables que deberás configurar:
+
+- `base_url`: URL base de la API (por defecto: http://localhost:8000)
+- `library_id`: ID de una biblioteca creada
+- `document_id`: ID de un documento creado
+- `chunk_id`: ID de un chunk recuperado
+
+### Flujo de prueba recomendado
+
+1. Ejecuta "Create Library" para crear una biblioteca nueva
+2. Guarda el ID devuelto en la variable `library_id`
+3. Crea un documento usando "Create Document" 
+4. Guarda el ID del documento en la variable `document_id`
+5. Inicia la indexación con "Start Indexing (BruteForce)" o "Start Indexing (BallTree)"
+6. Verifica el estado de la indexación con "Get Indexing Status"
+7. Una vez indexado, prueba las búsquedas con "Search Library"

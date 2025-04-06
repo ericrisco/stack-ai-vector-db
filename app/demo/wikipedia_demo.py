@@ -6,14 +6,12 @@ import uuid
 import argparse
 from typing import List, Dict, Any, Type
 
-from app.models.library import Library
+from app.models.library import Library, IndexerType
 from app.models.document import Document
 from app.models.chunk import Chunk
 from app.services.library_service import LibraryService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
-from app.indexer import BruteForceIndexer, BallTreeIndexer
-from app.indexer.indexer_interface import VectorIndexer
 
 class WikipediaDemo:
     """
@@ -24,10 +22,11 @@ class WikipediaDemo:
     4. Performs sample searches
     """
     
-    def __init__(self, indexer: VectorIndexer, chunk_size: int = 100):
+    def __init__(self, indexer_type: IndexerType, leaf_size: int = 40, chunk_size: int = 100):
         self.chunk_size = chunk_size
         self.library = None
-        self.indexer = indexer
+        self.indexer_type = indexer_type
+        self.leaf_size = leaf_size
         self.wikipedia_topics = [
             "Andorra",
             "Andorra la Vella"
@@ -137,24 +136,48 @@ class WikipediaDemo:
         return self.library
     
     async def index_content(self) -> Dict[str, Any]:
-        """Index the content using the configured indexer"""
+        """Index the content using the LibraryService indexing API"""
         if not self.library:
             raise ValueError("Library not created yet. Call create_library() first.")
         
-        print(f"Indexing library with ID: {self.library.id} using {self.indexer.get_indexer_name()} indexer")
+        print(f"Indexing library with ID: {self.library.id} using {self.indexer_type} indexer")
         print("This will generate embeddings for all chunks...")
         
+        # Start the indexing process
         start_time = time.time()
-        result = await self.indexer.index_library(self.library.id)
+        result = await LibraryService.start_indexing_library(
+            library_id=self.library.id,
+            indexer_type=self.indexer_type,
+            leaf_size=self.leaf_size
+        )
+        
+        print(f"Indexing started: {result}")
+        
+        # Wait for indexing to complete, polling status
+        while True:
+            status = LibraryService.get_indexing_status(self.library.id)
+            if status["indexing_in_progress"]:
+                print(f"Indexing in progress... Waiting 3 seconds")
+                await asyncio.sleep(3)
+                continue
+                
+            if status["indexed"]:
+                print(f"Indexing completed successfully")
+                break
+                
+            print(f"Indexing failed")
+            break
+            
         elapsed = time.time() - start_time
-        
         print(f"Indexing completed in {elapsed:.2f} seconds")
-        print(f"Indexed {result['total_documents']} documents with {result['total_chunks']} chunks")
         
-        return result
+        # Get final status
+        status = LibraryService.get_indexing_status(self.library.id)
+        
+        return status
     
     async def perform_searches(self, queries: List[str]) -> List[Dict[str, Any]]:
-        """Perform a series of searches on the indexed content"""
+        """Perform a series of searches on the indexed content using LibraryService"""
         if not self.library:
             raise ValueError("Library not created yet. Call create_library() first.")
             
@@ -164,26 +187,36 @@ class WikipediaDemo:
             print(f"\nSearching for: '{query}'")
             start_time = time.time()
             
-            search_results = await self.indexer.search(
-                text=query,
-                library_id=self.library.id,
-                top_k=3
-            )
-            
-            elapsed = time.time() - start_time
-            print(f"Search completed in {elapsed:.2f} seconds")
-            print(f"Found {len(search_results)} results")
-            
-            for i, result in enumerate(search_results):
-                print(f"\nResult #{i+1} - Score: {result['similarity_score']:.4f}")
-                print(f"Document: {result['document_name']}")
-                print(f"Text: {result['text'][:150]}...")
-            
-            results.append({
-                "query": query,
-                "results": search_results,
-                "search_time": elapsed
-            })
+            try:
+                # Use the library service to search
+                search_results = await LibraryService.search_library(
+                    library_id=self.library.id,
+                    query_text=query,
+                    top_k=3
+                )
+                
+                elapsed = time.time() - start_time
+                print(f"Search completed in {elapsed:.2f} seconds")
+                print(f"Found {len(search_results)} results")
+                
+                for i, result in enumerate(search_results):
+                    print(f"\nResult #{i+1} - Score: {result['similarity_score']:.4f}")
+                    print(f"Document: {result['document_name']}")
+                    print(f"Text: {result['text'][:150]}...")
+                
+                results.append({
+                    "query": query,
+                    "results": search_results,
+                    "search_time": elapsed
+                })
+                
+            except ValueError as e:
+                print(f"Search error: {str(e)}")
+                results.append({
+                    "query": query,
+                    "error": str(e),
+                    "results": []
+                })
         
         return results
 
@@ -196,18 +229,18 @@ async def run_demo(indexer_name: str = "brute_force", chunk_size: int = 150, lea
         chunk_size: Size of text chunks to create
         leaf_size: Size of leaf nodes for Ball Tree indexer
     """
-    # Select the indexer based on the name
+    # Convert indexer name to the format expected by the API
     if indexer_name.lower() == "brute_force":
-        indexer = BruteForceIndexer()
-        print(f"Using BruteForceIndexer")
+        indexer_type = IndexerType.BRUTE_FORCE
+        print(f"Using BRUTE_FORCE indexer")
     elif indexer_name.lower() == "ball_tree":
-        indexer = BallTreeIndexer(leaf_size=leaf_size)
-        print(f"Using BallTreeIndexer with leaf_size={leaf_size}")
+        indexer_type = IndexerType.BALL_TREE
+        print(f"Using BALL_TREE indexer with leaf_size={leaf_size}")
     else:
-        print(f"Unknown indexer: {indexer_name}. Using BruteForceIndexer.")
-        indexer = BruteForceIndexer()
+        print(f"Unknown indexer: {indexer_name}. Using BRUTE_FORCE indexer.")
+        indexer_type = IndexerType.BRUTE_FORCE
     
-    demo = WikipediaDemo(indexer=indexer, chunk_size=chunk_size)
+    demo = WikipediaDemo(indexer_type=indexer_type, leaf_size=leaf_size, chunk_size=chunk_size)
     
     try:
         # Create and index content

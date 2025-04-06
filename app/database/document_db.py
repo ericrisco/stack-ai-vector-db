@@ -18,18 +18,15 @@ def create_document(document: Document) -> Document:
         if document.library_id not in db.libraries:
             raise ValueError(f"Library with ID {document.library_id} does not exist")
         
-        # Ensure each chunk references this document
-        for chunk in document.chunks:
-            chunk.document_id = document.id
-        
         # Store the document
         db.documents[document.id] = document.model_dump()
         
         # Track the relationship
         db.document_library_map[document.id] = document.library_id
         
-        # Store associated chunks
+        # Ensure each chunk references this document and then store it
         for chunk in document.chunks:
+            chunk.document_id = document.id
             try:
                 create_chunk(chunk)
             except ValueError as e:

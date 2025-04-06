@@ -14,14 +14,15 @@ def create_chunk(chunk: Chunk) -> Chunk:
             raise ValueError(f"Chunk with ID {chunk.id} already exists")
         
         # Check if the referenced document exists
-        if chunk.document_id not in db.documents:
+        if chunk.document_id is not None and chunk.document_id not in db.documents:
             raise ValueError(f"Document with ID {chunk.document_id} does not exist")
         
         # Store the chunk
         db.chunks[chunk.id] = chunk.model_dump()
         
-        # Track the relationship
-        db.chunk_document_map[chunk.id] = chunk.document_id
+        # Track the relationship if document_id is provided
+        if chunk.document_id is not None:
+            db.chunk_document_map[chunk.id] = chunk.document_id
         
         return chunk
 
