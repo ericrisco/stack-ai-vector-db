@@ -20,10 +20,12 @@ A FastAPI service for vector database operations.
 │   │   └── embedding_service.py  # Vector embedding generation
 │   ├── database/         # Database connections and queries
 │   └── indexer/          # Vector indexing functionality
+│   └── demo/             # Demo applications and examples
 ├── tests/                # Unit tests
 │   ├── database/         # Database layer tests
 │   ├── services/         # Service layer tests
-│   └── routers/          # API router tests
+│   ├── routers/          # API router tests
+│   └── indexer/          # Vector indexer tests
 ├── Dockerfile            # Container definition
 ├── helmchart/            # Kubernetes Helm chart
 └── requirements.txt      # Python dependencies
@@ -91,6 +93,49 @@ Expected response:
 {"status": "ok"}
 ```
 
+## Wikipedia Demo
+
+The application includes a demo that showcases how to use the vector database and indexing functionality with real-world content from Wikipedia.
+
+### What the Demo Does
+
+The Wikipedia demo:
+
+1. Downloads articles about Andorra from Wikipedia using the Wikipedia API
+2. Creates a library and documents in the vector database
+3. Splits the article content into small text chunks
+4. Generates vector embeddings for each chunk using Cohere's API
+5. Indexes all chunks using the BruteForce indexer
+6. Performs sample searches to find relevant information
+
+### Running the Demo
+
+To run the Wikipedia demo:
+
+```bash
+python3 -m app.demo.wikipedia_demo --indexer brute_force --chunk-size 150
+```
+
+Parameters:
+- `--indexer`: The vector indexer to use (currently only "brute_force" is supported)
+- `--chunk-size`: The size of text chunks to create (default: 150 characters)
+
+### Prerequisites for the Demo
+
+To run the demo, you need:
+
+1. A Cohere API key in your `.env` file (for generating embeddings)
+2. Internet connection (to download Wikipedia articles)
+
+### Sample Searches
+
+The demo performs the following sample searches:
+- "What is the capital of Andorra?"
+- "What languages are spoken in Andorra?"
+- "What is the economy of Andorra based on?"
+- "What is the history of Andorra?"
+- "What are popular tourist activities in Andorra?"
+
 ## API Endpoints
 
 The API is versioned using the `X-API-Version` header. Current version is `1.0`.
@@ -145,6 +190,33 @@ embeddings = await EmbeddingService.generate_embeddings(
 ```
 
 The service supports different embedding models and input types as provided by Cohere's API.
+
+## Vector Indexers
+
+The application includes vector indexers for efficient similarity search:
+
+### BruteForce Indexer
+
+The BruteForce indexer is a simple implementation that compares query vectors with all indexed vectors. It's suitable for small libraries or as a baseline for comparison.
+
+Usage example:
+
+```python
+from app.indexer import BruteForceIndexer
+
+# Initialize the indexer
+indexer = BruteForceIndexer()
+
+# Index a library
+stats = await indexer.index_library(library_id)
+
+# Search for similar content
+results = await indexer.search(
+    text="Your search query",
+    library_id=library_id,
+    top_k=5
+)
+```
 
 ## Docker
 
@@ -223,6 +295,24 @@ python -m pytest tests/routers/v1/test_document.py
 python -m pytest tests/routers/v1/test_chunk.py
 ```
 
+### Running Indexer Tests
+
+The project includes tests for the vector indexers:
+
+```bash
+# Test all indexers
+python -m pytest tests/indexer
+
+# Test specific indexers
+python -m pytest tests/indexer/test_brute_force_indexer.py
+```
+
+The BruteForce indexer tests verify:
+- Correct indexer name and metadata
+- Library indexing functionality
+- Search functionality with results
+- Handling of empty or non-existent libraries
+
 ### Embedding Live Tests
 
 To test the Embedding service with actual Cohere API calls:
@@ -248,15 +338,3 @@ Where:
 - `-x`: Stop after first failure
 - `-v`: Verbose output
 - `-s`: Show print statements during test execution
-
-### Test Coverage
-
-The tests cover:
-- CRUD operations for Chunks, Documents, and Libraries
-- Relationship integrity between entities
-- Cascading delete operations
-- Error handling for invalid operations
-- Edge cases and validation
-- Service-layer business logic and validations
-- API router behavior and HTTP responses
-- Embedding generation through Cohere's API
