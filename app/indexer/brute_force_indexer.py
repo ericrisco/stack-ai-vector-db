@@ -5,11 +5,9 @@ from uuid import UUID
 
 from app.indexer.indexer_interface import VectorIndexer
 from app.models.chunk import Chunk
-from app.models.library import Library
-from app.services.library_service import LibraryService
+from app.models.library import Library, IndexerType
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
-
 
 class BruteForceIndexer(VectorIndexer):
     """
@@ -33,6 +31,8 @@ class BruteForceIndexer(VectorIndexer):
         """
         start_time = time.time()
         
+        from app.services.library_service import LibraryService
+        
         # Get the library and verify it exists
         library = LibraryService.get_library(library_id)
         if not library:
@@ -43,6 +43,7 @@ class BruteForceIndexer(VectorIndexer):
         
         total_documents = len(documents)
         total_chunks = 0
+        total_embeddings_generated = 0
         
         # Initialize storage for this library
         self.vectors[library_id] = []
@@ -55,6 +56,7 @@ class BruteForceIndexer(VectorIndexer):
                 embedding = chunk.embedding
                 if not embedding:
                     embedding = await EmbeddingService.generate_embedding(chunk.text)
+                    total_embeddings_generated += 1
                 
                 # Add chunk vector and metadata to our index
                 self.vectors[library_id].append(np.array(embedding, dtype=np.float32))
@@ -82,6 +84,7 @@ class BruteForceIndexer(VectorIndexer):
             "library_name": library.name,
             "total_documents": total_documents,
             "total_chunks": total_chunks,
+            "total_embeddings_generated": total_embeddings_generated,
             "processing_time_seconds": processing_time,
             "indexer": self.get_indexer_name()
         }
@@ -163,14 +166,14 @@ class BruteForceIndexer(VectorIndexer):
         
         return results
         
-    def get_indexer_name(self) -> str:
+    def get_indexer_name(self) -> IndexerType:
         """
         Get the name of this indexer implementation.
         
         Returns:
-            String name of the indexer
+            IndexerType enum value for this indexer
         """
-        return "BRUTE_FORCE"
+        return IndexerType.BRUTE_FORCE
         
     def get_indexer_info(self) -> Dict[str, Any]:
         """

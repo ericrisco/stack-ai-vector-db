@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional
 from uuid import UUID
 
 from app.models.chunk import Chunk
-from app.models.library import Library
+from app.models.library import Library, IndexerType
 
 
 class VectorIndexer(ABC):
@@ -37,5 +37,25 @@ class VectorIndexer(ABC):
             
         Returns:
             List of dictionaries containing search results
+        """
+        pass
+    
+    @abstractmethod
+    def get_indexer_name(self) -> IndexerType:
+        """
+        Get the name of the indexer implementation
+        
+        Returns:
+            IndexerType enum value for this indexer
+        """
+        pass
+    
+    @abstractmethod
+    def get_indexer_info(self) -> Dict[str, Any]:
+        """
+        Get information about the indexer
+        
+        Returns:
+            Dictionary with information about the indexer implementation
         """
         pass
