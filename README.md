@@ -18,6 +18,7 @@ A FastAPI service for efficient vector database operations with multiple indexin
 - [Testing](#testing)
 - [Wikipedia Data Importer](#wikipedia-data-importer)
 - [API Reference](#api-reference)
+- [Python SDK](#python-sdk)
 
 ## Overview
 
@@ -487,3 +488,73 @@ For the most effective testing experience with the Postman collection:
 7. Once indexed, test searches with the "Search Library" request
 
 This workflow allows you to quickly test all core functionality of the API without writing any code.
+
+## Python SDK
+
+The project includes a Python SDK that makes it easy to interact with the Vector DB API programmatically. The SDK is located in the `/sdk` directory.
+
+### SDK Features
+
+- Complete Pythonic interface for all API endpoints
+- Support for managing libraries, documents, and chunks
+- Similarity search functionality
+- Robust error handling with custom exceptions
+- Data validation with Pydantic
+- Comprehensive documentation with examples
+
+### Installing the SDK
+
+```bash
+cd sdk
+pip install -e .
+```
+
+### Basic SDK Usage
+
+```python
+from stack_ai_vector_db import VectorDBClient
+
+# Initialize the client
+client = VectorDBClient(base_url="http://localhost:8000")
+
+# Create a library
+library = client.create_library(
+    name="Research Papers",
+    metadata={"field": "AI"}
+)
+
+# Create a document with chunks
+document = client.create_document(
+    library_id=library.id,
+    name="Introduction to Vector Databases",
+    chunks=[
+        {"text": "Vector databases are specialized systems designed to manage vector embeddings."}
+    ]
+)
+
+# Index the library
+client.index_library(library_id=library.id)
+
+# Search for similar content
+results = client.search(
+    library_id=library.id,
+    query_text="How do vector databases work?",
+    top_k=5
+)
+```
+
+### Running the Example
+
+The SDK includes an example script that demonstrates how to use it:
+
+1. First, ensure the Vector DB API server is running (typically on http://localhost:8000)
+
+2. Then run the example script:
+   ```bash
+   cd sdk
+   python examples/basic_usage.py
+   ```
+
+The example shows how to create a library, add documents with chunks, handle indexing properly, and perform searches. The script includes a mechanism to wait for indexing to complete before attempting to search.
+
+For more detailed documentation, see the [SDK README](sdk/README.md).
