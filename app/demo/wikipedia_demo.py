@@ -200,8 +200,8 @@ class WikipediaDemo:
                 print(f"Found {len(search_results)} results")
                 
                 for i, result in enumerate(search_results):
-                    print(f"\nResult #{i+1} - Score: {result['similarity_score']:.4f}")
-                    print(f"Document: {result['document_name']}")
+                    print(f"\nResult #{i+1} - Score: {result['score']:.4f}")
+                    print(f"Document: {result['document']['name']}")
                     print(f"Text: {result['text'][:150]}...")
                 
                 results.append({
