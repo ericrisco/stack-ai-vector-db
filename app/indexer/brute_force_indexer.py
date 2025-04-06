@@ -8,6 +8,10 @@ from app.models.chunk import Chunk
 from app.models.library import Library, IndexerType
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
+import logging
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 class BruteForceIndexer(VectorIndexer):
     """
@@ -53,10 +57,8 @@ class BruteForceIndexer(VectorIndexer):
         for document in documents:
             for chunk in document.chunks:
                 # Generate embedding if it doesn't exist
-                embedding = chunk.embedding
-                if not embedding:
-                    embedding = await EmbeddingService.generate_embedding(chunk.text)
-                    total_embeddings_generated += 1
+                embedding = await EmbeddingService.generate_embedding(chunk.text)
+                total_embeddings_generated += 1
                 
                 # Add chunk vector and metadata to our index
                 self.vectors[library_id].append(np.array(embedding, dtype=np.float32))
@@ -152,6 +154,8 @@ class BruteForceIndexer(VectorIndexer):
         
         # Sort all results by similarity score
         results.sort(key=lambda x: x["similarity_score"], reverse=True)
+
+        logger.info(f"Found {len(results)} results for library {library_id}")
         
         # Limit to top_k results overall
         results = results[:top_k]

@@ -286,10 +286,8 @@ class BallTreeIndexer(VectorIndexer):
         for document in documents:
             for chunk in document.chunks:
                 # Generate embedding if it doesn't exist
-                embedding = chunk.embedding
-                if not embedding:
-                    embedding = await EmbeddingService.generate_embedding(chunk.text)
-                    total_embeddings_generated += 1
+                embedding = await EmbeddingService.generate_embedding(chunk.text)
+                total_embeddings_generated += 1
                 
                 vectors.append(embedding)
                 
