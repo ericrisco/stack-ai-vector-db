@@ -2,7 +2,11 @@ from typing import List, Optional, Dict
 from uuid import UUID
 from app.models.document import Document
 from app.database.db import get_db
-from app.database.chunk_db import create_chunk, delete_chunks_by_document
+from app.database.chunk_db import create_chunk, delete_chunks_by_document, get_chunks_by_document
+from app.database.persistence import save_library
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_document(document: Document) -> Document:
     """
@@ -33,6 +37,9 @@ def create_document(document: Document) -> Document:
                 # If there's an error, provide context
                 raise ValueError(f"Error creating chunk: {str(e)}")
         
+        # Save to persistent storage
+        save_library(document.library_id)
+        
         return document
 
 def get_document(document_id: UUID) -> Optional[Document]:
@@ -56,15 +63,28 @@ def get_all_documents() -> List[Document]:
 
 def get_documents_by_library(library_id: UUID) -> List[Document]:
     """
-    Get all documents belonging to a library
+    Get all documents belonging to a library, with their chunks
     """
     db = get_db()
+    documents = []
+    
     with db.document_lock:
-        return [
-            Document(**db.documents[doc_id]) 
-            for doc_id, lib_id in db.document_library_map.items() 
+        document_ids = [
+            doc_id for doc_id, lib_id in db.document_library_map.items() 
             if lib_id == library_id and doc_id in db.documents
         ]
+        
+        for doc_id in document_ids:
+            # Create the document without chunks initially
+            document_data = db.documents[doc_id]
+            document = Document(**document_data)
+            
+            # Get the chunks for this document
+            document.chunks = get_chunks_by_document(doc_id)
+            
+            documents.append(document)
+    
+    return documents
 
 def update_document(document_id: UUID, document_data: Dict) -> Optional[Document]:
     """
@@ -95,6 +115,11 @@ def update_document(document_id: UUID, document_data: Dict) -> Optional[Document
         # Store back to the database
         db.documents[document_id] = updated_document.model_dump()
         
+        # Save to persistent storage
+        library_id = db.document_library_map.get(document_id)
+        if library_id:
+            save_library(library_id)
+        
         return updated_document
 
 def delete_document(document_id: UUID) -> bool:
@@ -102,6 +127,13 @@ def delete_document(document_id: UUID) -> bool:
     Delete a document by ID, also deleting all its chunks
     """
     db = get_db()
+    
+    # Get library_id before deletion for persistence
+    library_id = None
+    with db.document_lock:
+        if document_id in db.document_library_map:
+            library_id = db.document_library_map[document_id]
+    
     with db.document_lock:
         if document_id not in db.documents:
             return False
@@ -115,6 +147,10 @@ def delete_document(document_id: UUID) -> bool:
         # Remove the relationship
         if document_id in db.document_library_map:
             del db.document_library_map[document_id]
+        
+        # Save to persistent storage
+        if library_id:
+            save_library(library_id)
         
         return True
 

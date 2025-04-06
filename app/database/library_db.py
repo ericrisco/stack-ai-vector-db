@@ -3,6 +3,11 @@ from uuid import UUID
 from app.models.library import Library
 from app.database.db import get_db
 from app.database.document_db import create_document, delete_documents_by_library
+from app.database.persistence import save_library, get_library_file_path
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_library(library: Library) -> Library:
     """
@@ -28,6 +33,9 @@ def create_library(library: Library) -> Library:
             except ValueError as e:
                 # If there's an error, provide context
                 raise ValueError(f"Error creating document: {str(e)}")
+        
+        # Save to persistent storage
+        save_library(library.id)
         
         return library
 
@@ -75,6 +83,9 @@ def update_library(library_id: UUID, library_data: Dict) -> Optional[Library]:
         # Store back to the database
         db.libraries[library_id] = updated_library.model_dump()
         
+        # Save to persistent storage
+        save_library(library_id)
+        
         return updated_library
 
 def delete_library(library_id: UUID) -> bool:
@@ -91,5 +102,14 @@ def delete_library(library_id: UUID) -> bool:
         
         # Delete the library
         del db.libraries[library_id]
+        
+        # Delete the JSON file if it exists
+        file_path = get_library_file_path(library_id)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                logger.info(f"Deleted library file: {file_path}")
+            except Exception as e:
+                logger.error(f"Error deleting library file {file_path}: {str(e)}")
         
         return True 
