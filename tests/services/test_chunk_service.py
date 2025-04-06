@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 from uuid import uuid4, UUID
 from app.models.chunk import Chunk
 from app.services.chunk_service import ChunkService
+from app.models.document import Document
 
 @pytest.fixture
 def sample_document_id():
@@ -139,8 +140,10 @@ def test_get_chunks_by_document(mock_get_chunks_by_document, sample_chunks, samp
     assert result == sample_chunks
     mock_get_chunks_by_document.assert_called_once_with(sample_document_id)
 
+@patch('app.services.chunk_service.get_document')
+@patch('app.services.chunk_service.get_chunk')
 @patch('app.services.chunk_service.update_chunk')
-def test_update_chunk(mock_update_chunk, sample_chunk):
+def test_update_chunk(mock_update_chunk, mock_get_chunk, mock_get_document, sample_chunk):
     chunk_id = sample_chunk.id
     update_data = {"text": "Updated chunk content", "metadata": {"updated": "true"}}
     updated_chunk = Chunk(
@@ -150,39 +153,72 @@ def test_update_chunk(mock_update_chunk, sample_chunk):
         embedding=sample_chunk.embedding,
         metadata={"updated": "true"}
     )
+    
+    # Configure mocks to simulate successful update
+    mock_get_chunk.return_value = sample_chunk
+    mock_get_document.return_value = Document(
+        id=sample_chunk.document_id, 
+        name="Test Document", 
+        library_id=uuid4(),
+        metadata={"source": "test"}
+    )
     mock_update_chunk.return_value = updated_chunk
     
     result = ChunkService.update_chunk(chunk_id, update_data)
     
     assert result == updated_chunk
+    mock_get_chunk.assert_called_once_with(chunk_id)
+    mock_get_document.assert_called_once_with(sample_chunk.document_id)
     mock_update_chunk.assert_called_once_with(chunk_id, update_data)
 
+@patch('app.services.chunk_service.get_chunk')
 @patch('app.services.chunk_service.update_chunk')
-def test_update_nonexistent_chunk(mock_update_chunk):
+def test_update_nonexistent_chunk(mock_update_chunk, mock_get_chunk):
     chunk_id = uuid4()
     update_data = {"text": "Updated content"}
-    mock_update_chunk.return_value = None
+    
+    # Configure mock to simulate chunk not found
+    mock_get_chunk.return_value = None
     
     result = ChunkService.update_chunk(chunk_id, update_data)
     
     assert result is None
-    mock_update_chunk.assert_called_once_with(chunk_id, update_data)
+    mock_get_chunk.assert_called_once_with(chunk_id)
+    # update_chunk should not be called if the chunk doesn't exist
+    mock_update_chunk.assert_not_called()
 
+@patch('app.services.chunk_service.get_document')
+@patch('app.services.chunk_service.get_chunk')
 @patch('app.services.chunk_service.delete_chunk')
-def test_delete_chunk(mock_delete_chunk, sample_chunk):
+def test_delete_chunk(mock_delete_chunk, mock_get_chunk, mock_get_document, sample_chunk):
+    # Configure mocks to simulate successful deletion
+    mock_get_chunk.return_value = sample_chunk
+    mock_get_document.return_value = Document(
+        id=sample_chunk.document_id, 
+        name="Test Document", 
+        library_id=uuid4(),
+        metadata={"source": "test"}
+    )
     mock_delete_chunk.return_value = True
     
     result = ChunkService.delete_chunk(sample_chunk.id)
     
     assert result is True
+    mock_get_chunk.assert_called_once_with(sample_chunk.id)
+    mock_get_document.assert_called_once_with(sample_chunk.document_id)
     mock_delete_chunk.assert_called_once_with(sample_chunk.id)
 
+@patch('app.services.chunk_service.get_chunk')
 @patch('app.services.chunk_service.delete_chunk')
-def test_delete_nonexistent_chunk(mock_delete_chunk):
+def test_delete_nonexistent_chunk(mock_delete_chunk, mock_get_chunk):
     chunk_id = uuid4()
-    mock_delete_chunk.return_value = False
+    
+    # Configure mock to simulate chunk not found
+    mock_get_chunk.return_value = None
     
     result = ChunkService.delete_chunk(chunk_id)
     
     assert result is False
-    mock_delete_chunk.assert_called_once_with(chunk_id) 
+    mock_get_chunk.assert_called_once_with(chunk_id)
+    # delete_chunk should not be called if the chunk doesn't exist
+    mock_delete_chunk.assert_not_called() 

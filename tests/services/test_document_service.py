@@ -127,8 +127,9 @@ def test_get_documents_by_library(mock_get_documents_by_library, sample_document
     assert result == sample_documents
     mock_get_documents_by_library.assert_called_once_with(sample_library_id)
 
+@patch('app.services.document_service.get_document')
 @patch('app.services.document_service.update_document')
-def test_update_document(mock_update_document, sample_document):
+def test_update_document(mock_update_document, mock_get_document, sample_document):
     document_id = sample_document.id
     update_data = {"name": "Updated Document", "metadata": {"updated": "true"}}
     updated_document = Document(
@@ -138,11 +139,13 @@ def test_update_document(mock_update_document, sample_document):
         chunks=[],
         metadata={"updated": "true"}
     )
+    mock_get_document.return_value = sample_document
     mock_update_document.return_value = updated_document
     
     result = DocumentService.update_document(document_id, update_data)
     
     assert result == updated_document
+    mock_get_document.assert_called_once_with(document_id)
     mock_update_document.assert_called_once_with(document_id, update_data)
 
 def test_update_document_with_chunks():

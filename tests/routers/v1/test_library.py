@@ -137,16 +137,20 @@ def test_update_library_validation_error(test_library):
         assert response.status_code == 400
         assert response.json()["detail"] == "Cannot update documents through library update"
 
-def test_delete_library_success(test_library):
-    with patch('app.services.library_service.LibraryService.delete_library', 
-               return_value=True):
-        response = client.delete(
-            f"/api/libraries/{test_library.id}",
-            headers={"X-API-Version": "1.0"}
-        )
-        
-        assert response.status_code == 204
-        assert response.text == ""
+def test_delete_library_success():
+    # Create a random ID
+    library_id = uuid4()
+    
+    # Mock the service calls
+    with patch.object(LibraryService, 'get_library', return_value=Library(id=library_id, name="Test Library")):
+        with patch.object(LibraryService, 'delete_library', return_value=True):
+            response = client.delete(
+                f"/api/libraries/{library_id}",
+                headers={"X-API-Version": "1.0"}
+            )
+            
+            assert response.status_code == 204
+            assert response.text == ""
 
 def test_delete_library_not_found():
     library_id = uuid4()
@@ -175,177 +179,6 @@ def test_api_version_not_required():
         response = client.get("/api/libraries")
         
         assert response.status_code == 200 
-
-def test_create_library_valid():
-    # Create a mock library response
-    mock_library = Library(
-        id=uuid4(),
-        name="Test Library",
-        metadata={"key": "value"}
-    )
-    
-    # Mock the service call
-    with patch.object(LibraryService, 'create_library', return_value=mock_library):
-        response = client.post(
-            "/api/libraries/",
-            headers={"X-API-Version": "1.0"},
-            json={"name": "Test Library", "metadata": {"key": "value"}}
-        )
-        
-        assert response.status_code == 200
-        assert response.json()["name"] == "Test Library"
-        assert response.json()["metadata"] == {"key": "value"}
-
-def test_create_library_invalid():
-    # Mock the service to raise an exception
-    with patch.object(LibraryService, 'create_library', side_effect=Exception("Invalid data")):
-        response = client.post(
-            "/api/libraries/",
-            headers={"X-API-Version": "1.0"},
-            json={"invalid": "data"}
-        )
-        
-        assert response.status_code == 400
-        assert "Invalid data" in response.json()["detail"]
-
-def test_get_all_libraries():
-    # Create mock libraries
-    mock_libraries = [
-        Library(id=uuid4(), name="Library 1"),
-        Library(id=uuid4(), name="Library 2")
-    ]
-    
-    # Mock the service call
-    with patch.object(LibraryService, 'get_all_libraries', return_value=mock_libraries):
-        response = client.get(
-            "/api/libraries/",
-            headers={"X-API-Version": "1.0"}
-        )
-        
-        assert response.status_code == 200
-        assert len(response.json()) == 2
-        assert response.json()[0]["name"] == "Library 1"
-        assert response.json()[1]["name"] == "Library 2"
-
-def test_get_library_found():
-    # Create a mock library
-    library_id = uuid4()
-    mock_library = Library(id=library_id, name="Test Library")
-    
-    # Mock the service call
-    with patch.object(LibraryService, 'get_library', return_value=mock_library):
-        response = client.get(
-            f"/api/libraries/{library_id}",
-            headers={"X-API-Version": "1.0"}
-        )
-        
-        assert response.status_code == 200
-        assert response.json()["name"] == "Test Library"
-        assert response.json()["id"] == str(library_id)
-
-def test_get_library_not_found():
-    # Create a random ID
-    library_id = uuid4()
-    
-    # Mock the service to return None (not found)
-    with patch.object(LibraryService, 'get_library', return_value=None):
-        response = client.get(
-            f"/api/libraries/{library_id}",
-            headers={"X-API-Version": "1.0"}
-        )
-        
-        assert response.status_code == 404
-        assert f"Library with ID {library_id} not found" in response.json()["detail"]
-
-def test_update_library_valid():
-    # Create a mock library
-    library_id = uuid4()
-    mock_library = Library(id=library_id, name="Updated Library")
-    
-    # Mock the service call
-    with patch.object(LibraryService, 'update_library', return_value=mock_library):
-        response = client.patch(
-            f"/api/libraries/{library_id}",
-            headers={"X-API-Version": "1.0"},
-            json={"name": "Updated Library"}
-        )
-        
-        assert response.status_code == 200
-        assert response.json()["name"] == "Updated Library"
-
-def test_update_library_not_found():
-    # Create a random ID
-    library_id = uuid4()
-    
-    # Mock the service to return None (not found)
-    with patch.object(LibraryService, 'update_library', return_value=None):
-        response = client.patch(
-            f"/api/libraries/{library_id}",
-            headers={"X-API-Version": "1.0"},
-            json={"name": "Updated Library"}
-        )
-        
-        assert response.status_code == 404
-        assert f"Library with ID {library_id} not found" in response.json()["detail"]
-
-def test_update_library_invalid():
-    # Create a random ID
-    library_id = uuid4()
-    
-    # Mock the service to raise a ValueError
-    with patch.object(LibraryService, 'update_library', side_effect=ValueError("Invalid update")):
-        response = client.patch(
-            f"/api/libraries/{library_id}",
-            headers={"X-API-Version": "1.0"},
-            json={"invalid": "data"}
-        )
-        
-        assert response.status_code == 400
-        assert "Invalid update" in response.json()["detail"]
-
-def test_delete_library_success():
-    # Create a random ID
-    library_id = uuid4()
-    
-    # Mock the service calls
-    with patch.object(LibraryService, 'get_library', return_value=Library(id=library_id)):
-        with patch.object(LibraryService, 'delete_library', return_value=True):
-            response = client.delete(
-                f"/api/libraries/{library_id}",
-                headers={"X-API-Version": "1.0"}
-            )
-            
-            assert response.status_code == 200
-            assert response.json() is True
-
-def test_delete_library_not_found():
-    # Create a random ID
-    library_id = uuid4()
-    
-    # Mock the service to return None (not found)
-    with patch.object(LibraryService, 'get_library', return_value=None):
-        response = client.delete(
-            f"/api/libraries/{library_id}",
-            headers={"X-API-Version": "1.0"}
-        )
-        
-        assert response.status_code == 404
-        assert f"Library with ID {library_id} not found" in response.json()["detail"]
-
-def test_unsupported_api_version():
-    response = client.get(
-        "/api/libraries/",
-        headers={"X-API-Version": "2.0"}
-    )
-    
-    assert response.status_code == 400
-    assert "Unsupported API version" in response.json()["detail"]
-
-def test_missing_api_version():
-    response = client.get("/api/libraries/")
-    
-    assert response.status_code == 400
-    assert "Missing API version" in response.json()["detail"]
 
 @pytest.mark.asyncio
 async def test_start_indexing():
@@ -441,21 +274,28 @@ async def test_search_library():
     # Create a random ID
     library_id = uuid4()
     
-    # Mock search results
-    mock_results = [
-        {
-            "library_id": str(library_id),
-            "similarity_score": 0.95,
-            "chunk_id": str(uuid4()),
-            "document_id": str(uuid4()),
-            "document_name": "Test Document",
-            "text": "This is a test chunk that matches the query",
-            "metadata": {"position": "1"}
-        }
-    ]
+    # Create document and chunk IDs
+    document_id = uuid4()
+    chunk_id = uuid4()
+    
+    # Create DocumentInfo and SearchResult models
+    from app.models.search import DocumentInfo, SearchResult
+    
+    document_info = DocumentInfo(
+        id=str(document_id),
+        name="Test Document",
+        metadata={"source": "test"}
+    )
+    
+    search_result = SearchResult(
+        chunk_id=str(chunk_id),
+        text="This is a test chunk that matches the query",
+        score=0.95,
+        document=document_info
+    )
     
     # Create a mock for the async method
-    async_mock = AsyncMock(return_value=mock_results)
+    async_mock = AsyncMock(return_value=[search_result])
     
     # Apply the mock
     with patch.object(LibraryService, 'search_library', async_mock):
@@ -467,8 +307,8 @@ async def test_search_library():
         
         assert response.status_code == 200
         assert len(response.json()) == 1
-        assert response.json()[0]["similarity_score"] == 0.95
-        assert response.json()[0]["document_name"] == "Test Document"
+        assert response.json()[0]["score"] == 0.95
+        assert response.json()[0]["document"]["name"] == "Test Document"
         assert response.json()[0]["text"] == "This is a test chunk that matches the query"
 
 @pytest.mark.asyncio
