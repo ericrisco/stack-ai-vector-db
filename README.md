@@ -19,8 +19,12 @@ A FastAPI service for vector database operations.
 │   │   ├── chunk_service.py      # Chunk operations
 │   │   └── embedding_service.py  # Vector embedding generation
 │   ├── database/         # Database connections and queries
-│   └── indexer/          # Vector indexing functionality
+│   ├── indexer/          # Vector indexing functionality
+│   │   ├── indexer_interface.py  # Base indexer interface
+│   │   ├── brute_force_indexer.py  # Brute force implementation
+│   │   └── ball_tree_indexer.py  # Ball Tree implementation
 │   └── demo/             # Demo applications and examples
+│       └── wikipedia_demo.py  # Wikipedia content demo
 ├── tests/                # Unit tests
 │   ├── database/         # Database layer tests
 │   ├── services/         # Service layer tests
@@ -143,8 +147,84 @@ Parameters:
 3. After successful indexing, the library becomes `indexed: true` and `indexing_in_progress: false`
 4. Any modifications to the library's documents or chunks automatically mark it as `indexed: false`
 5. You can only perform searches on libraries that are fully indexed (`indexed: true`)
+6. Attempting to search a library that is currently being indexed will return an error
 
-## Wikipedia Demo
+## Architecture Enhancements
+
+### Separation of Storage and Indexing
+
+The system now separates the storage of chunks from the generation of embeddings:
+
+1. **Chunks Without Embeddings**: Chunks can now be created without embeddings, making document creation faster.
+2. **On-Demand Embedding Generation**: Embeddings are generated during the indexing process, not at chunk creation time.
+3. **Efficient Resource Usage**: This approach reduces memory usage and allows for batch processing of embeddings.
+
+This separation provides several benefits:
+- Faster document creation and storage
+- Reduced API calls for embeddings when only storing data
+- Flexibility to change embedding models without recreating chunks
+- Ability to re-index with different parameters without recreating content
+
+## Vector Indexers
+
+The application includes different vector indexers for efficient similarity search:
+
+### Brute Force Indexer
+
+The Brute Force indexer is a simple implementation that compares query vectors with all indexed vectors. It's suitable for small libraries or as a baseline for comparison.
+
+```python
+# Start indexing with BruteForce indexer
+await LibraryService.start_indexing_library(
+    library_id=UUID("your-library-id"),
+    indexer_type="BRUTE_FORCE"
+)
+```
+
+### Ball Tree Indexer
+
+The Ball Tree indexer organizes vectors in a hierarchical tree structure of nested hyperspheres, allowing for more efficient nearest neighbor searches with O(log n) complexity in the average case. It's especially efficient for higher-dimensional spaces and larger datasets.
+
+```python
+# Start indexing with BallTree indexer
+await LibraryService.start_indexing_library(
+    library_id=UUID("your-library-id"),
+    indexer_type="BALL_TREE",
+    leaf_size=40  # Optional parameter to configure tree structure
+)
+```
+
+#### Ball Tree Structure
+
+The Ball Tree organizes points in a binary tree where:
+- Each node represents a "ball" (hypersphere) containing a subset of the points
+- The root node contains all points
+- Each non-leaf node has two children that partition its points
+- Leaf nodes contain at most `leaf_size` points
+- The tree supports efficient nearest neighbor searches by pruning large portions of the search space
+
+#### Performance Comparison
+
+When comparing the Ball Tree indexer with the Brute Force indexer:
+
+- **Indexing Time**: Similar for small datasets, Ball Tree may take slightly longer to build the tree structure
+- **Search Time**: Ball Tree performs faster and more consistent searches, especially as the dataset grows
+- **Memory Usage**: Ball Tree requires additional memory to store the tree structure
+- **Scalability**: Ball Tree scales better with O(log n) average search complexity vs O(n) for Brute Force
+- **Stability**: Ball Tree provides more consistent search performance regardless of query complexity
+
+For small datasets (hundreds of vectors), both indexers perform well, but as the data grows to thousands or millions of vectors, the Ball Tree indexer offers significant performance advantages.
+
+#### Choosing the Right Indexer
+
+- **Brute Force**: Best for small datasets (< 1000 vectors) or when exact results are critical
+- **Ball Tree**: Better for larger datasets, higher-dimensional embeddings, or when search speed is important
+
+The `leaf_size` parameter in Ball Tree allows tuning the trade-off between search speed and memory usage:
+- Smaller leaf sizes (10-20) create deeper trees that can search faster but use more memory
+- Larger leaf sizes (40-100) create shallower trees that use less memory but may search slightly slower
+
+## Running the Demo
 
 The application includes a demo that showcases how to use the vector database and indexing functionality with real-world content from Wikipedia.
 
@@ -277,64 +357,6 @@ embeddings = await EmbeddingService.generate_embeddings(
 ```
 
 The service supports different embedding models and input types as provided by Cohere's API.
-
-## Vector Indexers
-
-The application includes vector indexers for efficient similarity search:
-
-### BruteForce Indexer
-
-The BruteForce indexer is a simple implementation that compares query vectors with all indexed vectors. It's suitable for small libraries or as a baseline for comparison.
-
-### Ball Tree Indexer
-
-The Ball Tree indexer organizes vectors in a hierarchical tree structure of nested hyperspheres, allowing for more efficient nearest neighbor searches with O(log n) complexity in the average case. It's especially efficient for higher-dimensional spaces and larger datasets.
-
-### Using Indexers via the Library Service
-
-The recommended way to use indexers is through the LibraryService, which manages the indexing state:
-
-```python
-# Start indexing with BruteForce indexer
-await LibraryService.start_indexing_library(
-    library_id=UUID("your-library-id"),
-    indexer_type="BRUTE_FORCE"
-)
-
-# Start indexing with BallTree indexer
-await LibraryService.start_indexing_library(
-    library_id=UUID("your-library-id"),
-    indexer_type="BALL_TREE",
-    leaf_size=40
-)
-
-# Search an indexed library
-results = await LibraryService.search_library(
-    library_id=UUID("your-library-id"),
-    query_text="Your search query",
-    top_k=5
-)
-```
-
-#### Ball Tree Structure
-
-The Ball Tree organizes points in a binary tree where:
-- Each node represents a "ball" (hypersphere) containing a subset of the points
-- The root node contains all points
-- Each non-leaf node has two children that partition its points
-- Leaf nodes contain at most `leaf_size` points
-- The tree supports efficient nearest neighbor searches by pruning large portions of the search space
-
-#### Performance Comparison
-
-When comparing the Ball Tree indexer with the Brute Force indexer:
-
-- **Indexing Time**: Similar for small datasets, Ball Tree may take slightly longer to build the tree structure
-- **Search Time**: Ball Tree performs faster and more consistent searches, especially as the dataset grows
-- **Memory Usage**: Ball Tree requires additional memory to store the tree structure
-- **Scalability**: Ball Tree scales better with O(log n) average search complexity vs O(n) for Brute Force
-
-For small datasets (hundreds of vectors), both indexers perform well, but as the data grows to thousands or millions of vectors, the Ball Tree indexer offers significant performance advantages.
 
 ## Docker
 
