@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi.responses import JSONResponse
 
 from app.models.library import Library, IndexStatus, IndexerType
+from app.models.search import SearchResult
 from app.services.library_service import LibraryService
 from app.routers.dependencies import verify_api_version
 
@@ -50,13 +51,25 @@ async def delete_library(library_id: UUID = Path(..., description="The ID of the
 @router.post("/{library_id}/index", response_model=Dict[str, Any], dependencies=[Depends(verify_api_version)])
 async def index_library(
     library_id: UUID,
-    indexer_type: IndexerType = IndexerType.BRUTE_FORCE,
+    indexer_data: Dict[str, Any] = Body(default={"indexer_type": "BRUTE_FORCE"}),
     leaf_size: int = Query(40, ge=10, le=1000, description="Leaf size for Ball Tree indexer")
 ):
     """
     Start indexing a library with specified indexer.
     """
     try:
+        # Extract indexer_type from the body and convert it to enum
+        indexer_type_str = indexer_data.get("indexer_type", "BRUTE_FORCE")
+        try:
+            indexer_type = IndexerType(indexer_type_str)
+        except ValueError:
+            raise ValueError(f"Invalid indexer_type: {indexer_type_str}. Valid options are: {', '.join([t.value for t in IndexerType])}")
+        
+        # Get leaf_size from body if provided, otherwise use query param
+        body_leaf_size = indexer_data.get("leaf_size")
+        if body_leaf_size is not None:
+            leaf_size = body_leaf_size
+        
         result = await LibraryService.start_indexing_library(
             library_id=library_id,
             indexer_type=indexer_type,
@@ -80,7 +93,7 @@ async def get_indexing_status(library_id: UUID):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving indexing status: {str(e)}")
 
-@router.post("/{library_id}/search", response_model=List[Dict[str, Any]], dependencies=[Depends(verify_api_version)])
+@router.post("/{library_id}/search", response_model=List[SearchResult], dependencies=[Depends(verify_api_version)])
 async def search_library(
     library_id: UUID,
     query_text: str = Query(..., min_length=1, description="Text to search for"),
@@ -88,6 +101,7 @@ async def search_library(
 ):
     """
     Search for similar content in an indexed library.
+    Returns simplified search results with only the relevant information.
     """
     try:
         results = await LibraryService.search_library(
@@ -95,6 +109,7 @@ async def search_library(
             query_text=query_text,
             top_k=top_k
         )
+        # No conversion needed, results are already SearchResult objects
         return results
     except ValueError as e:
         if "not indexed" in str(e).lower() or "being indexed" in str(e).lower():

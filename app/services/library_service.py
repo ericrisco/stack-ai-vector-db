@@ -217,7 +217,7 @@ class LibraryService:
         library_id: UUID, 
         query_text: str, 
         top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> List["SearchResult"]:
         """
         Search for similar content in a library
         
@@ -227,8 +227,11 @@ class LibraryService:
             top_k: Number of results to return
             
         Returns:
-            List of search results
+            List of SearchResult objects
         """
+        from app.services.document_service import DocumentService
+        from app.models.search import SearchResult, DocumentInfo
+        
         library = get_library(library_id)
         if not library:
             raise ValueError(f"Library with ID {library_id} not found")
@@ -246,7 +249,50 @@ class LibraryService:
             raise ValueError(f"No indexer found for library. Please re-index the library.")
         
         # Perform the search
-        results = await indexer.search(query_text, library_id, top_k)
+        raw_results = await indexer.search(query_text, library_id, top_k)
+        
+        # Format results using Pydantic models
+        results = []
+        for result in raw_results:
+            # Get the complete document - use string version of UUID for lookup
+            document_id = result["document_id"]
+            # Convert to UUID object if it's a string
+            if isinstance(document_id, str):
+                document_id = UUID(document_id)
+            
+            document = DocumentService.get_document(document_id)
+            
+            # Create DocumentInfo model
+            doc_info = None
+            if document:
+                doc_info = DocumentInfo(
+                    id=str(document.id),
+                    name=document.name,
+                    metadata=document.metadata
+                )
+            else:
+                # If document not found, create minimal info
+                doc_info = DocumentInfo(
+                    id=str(document_id),
+                    name="Unknown Document",
+                    metadata={}
+                )
+            
+            # Convert UUID to string if needed
+            chunk_id = result["chunk_id"]
+            if isinstance(chunk_id, UUID):
+                chunk_id = str(chunk_id)
+            
+            # Create a SearchResult model instance
+            search_result = SearchResult(
+                chunk_id=chunk_id,
+                text=result["text"],
+                score=result["similarity_score"],
+                document=doc_info,
+            )
+            
+            results.append(search_result)
+            
         return results
     
     @staticmethod
