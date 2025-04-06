@@ -97,6 +97,156 @@ Expected response:
 {"status": "ok"}
 ```
 
+## Basic Operations
+
+Before indexing and searching, you need to create libraries, documents, and chunks. Here's how to perform these basic operations:
+
+### Creating a Library
+
+A library is a top-level container for documents and their chunks. Create a library first:
+
+```bash
+curl -X POST "http://localhost:8000/api/libraries" \
+  -H "X-API-Version: 1.0" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My First Library",
+    "metadata": {
+      "description": "A test library",
+      "created_by": "user123"
+    }
+  }'
+```
+
+Response:
+```json
+{
+  "id": "f8a7b6c5-d4e3-4f2g-1h0i-9j8k7l6m5n4o",
+  "name": "My First Library",
+  "metadata": {
+    "description": "A test library",
+    "created_by": "user123"
+  },
+  "documents": [],
+  "index_status": {
+    "indexed": false,
+    "indexer_type": null,
+    "last_indexed": null,
+    "indexing_in_progress": false
+  }
+}
+```
+
+Save the library ID for use in subsequent operations.
+
+### Creating a Document
+
+Documents belong to libraries and contain chunks of text. To create a document:
+
+```bash
+curl -X POST "http://localhost:8000/api/documents" \
+  -H "X-API-Version: 1.0" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "library_id": "f8a7b6c5-d4e3-4f2g-1h0i-9j8k7l6m5n4o",
+    "name": "My First Document",
+    "metadata": {
+      "author": "John Doe",
+      "category": "tutorial"
+    },
+    "chunks": [
+      {
+        "text": "This is the first chunk of text in the document.",
+        "metadata": {
+          "position": "0"
+        }
+      },
+      {
+        "text": "This is the second chunk with additional information.",
+        "metadata": {
+          "position": "1"
+        }
+      }
+    ]
+  }'
+```
+
+Response:
+```json
+{
+  "id": "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+  "library_id": "f8a7b6c5-d4e3-4f2g-1h0i-9j8k7l6m5n4o",
+  "name": "My First Document",
+  "metadata": {
+    "author": "John Doe",
+    "category": "tutorial"
+  },
+  "chunks": [
+    {
+      "id": "p6o5n4m3-l2k1-j0i9-h8g7-f6e5d4c3b2a1",
+      "document_id": "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+      "text": "This is the first chunk of text in the document.",
+      "embedding": null,
+      "metadata": {
+        "position": "0"
+      }
+    },
+    {
+      "id": "q7p6o5n4-m3l2-k1j0-i9h8-g7f6e5d4c3b2",
+      "document_id": "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+      "text": "This is the second chunk with additional information.",
+      "embedding": null,
+      "metadata": {
+        "position": "1"
+      }
+    }
+  ]
+}
+```
+
+Note that chunks are created with `embedding: null`. Embeddings will be generated during indexing.
+
+### Creating Individual Chunks
+
+You can also create chunks individually or in batches:
+
+```bash
+# Create a single chunk
+curl -X POST "http://localhost:8000/api/chunks" \
+  -H "X-API-Version: 1.0" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "document_id": "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+    "text": "This is a new chunk added to the existing document.",
+    "metadata": {
+      "position": "2"
+    }
+  }'
+
+# Create multiple chunks in a batch
+curl -X POST "http://localhost:8000/api/chunks/batch" \
+  -H "X-API-Version: 1.0" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "document_id": "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+      "text": "This is the third chunk in the batch.",
+      "metadata": {
+        "position": "3"
+      }
+    },
+    {
+      "document_id": "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+      "text": "This is the fourth chunk in the batch.",
+      "metadata": {
+        "position": "4"
+      }
+    }
+  ]'
+```
+
+Whenever you add or modify documents or chunks, the library's `indexed` status will be set to `false`, indicating that you need to re-index the library for search.
+
 ## Library Indexing and Search
 
 The application supports indexing libraries and performing semantic searches directly through the API. This feature maintains the indexing state of each library and ensures searches only work on properly indexed libraries.
@@ -476,28 +626,28 @@ Where:
 
 ## Postman Collection
 
-Para probar la API de Stack AI Vector DB, puedes importar la colección de Postman incluida en este repositorio:
+To test the Stack AI Vector DB API, you can import the Postman collection included in this repository:
 
-1. Abre Postman
-2. Haz clic en "Import" en la esquina superior izquierda
-3. Selecciona el archivo `postman_collection.json` de este repositorio
-4. La colección "Stack AI Vector DB API" estará disponible en tu espacio de trabajo
+1. Open Postman
+2. Click on "Import" in the top left corner
+3. Select the `postman_collection.json` file from this repository
+4. The "Stack AI Vector DB API" collection will be available in your workspace
 
-### Variables de entorno
+### Environment Variables
 
-La colección usa las siguientes variables que deberás configurar:
+The collection uses the following variables that you'll need to configure:
 
-- `base_url`: URL base de la API (por defecto: http://localhost:8000)
-- `library_id`: ID de una biblioteca creada
-- `document_id`: ID de un documento creado
-- `chunk_id`: ID de un chunk recuperado
+- `base_url`: Base URL of the API (default: http://localhost:8000)
+- `library_id`: ID of a created library
+- `document_id`: ID of a created document
+- `chunk_id`: ID of a retrieved chunk
 
-### Flujo de prueba recomendado
+### Recommended Testing Flow
 
-1. Ejecuta "Create Library" para crear una biblioteca nueva
-2. Guarda el ID devuelto en la variable `library_id`
-3. Crea un documento usando "Create Document" 
-4. Guarda el ID del documento en la variable `document_id`
-5. Inicia la indexación con "Start Indexing (BruteForce)" o "Start Indexing (BallTree)"
-6. Verifica el estado de la indexación con "Get Indexing Status"
-7. Una vez indexado, prueba las búsquedas con "Search Library"
+1. Run "Create Library" to create a new library
+2. Save the returned ID in the `library_id` variable
+3. Create a document using "Create Document"
+4. Save the document ID in the `document_id` variable
+5. Start indexing with "Start Indexing (BruteForce)" or "Start Indexing (BallTree)"
+6. Check the indexing status with "Get Indexing Status"
+7. Once indexed, test searches with "Search Library"
