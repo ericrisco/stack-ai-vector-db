@@ -20,7 +20,17 @@ class DocumentService:
         """
         Create a single document with its chunks
         """
-        return create_document(document)
+        # Create the document
+        created_doc = create_document(document)
+        
+        # Import inside method to avoid circular imports
+        from app.services.library_service import LibraryService
+        
+        # Mark library as not indexed
+        if created_doc.library_id:
+            LibraryService.mark_library_unindexed(created_doc.library_id)
+            
+        return created_doc
     
     @staticmethod
     def create_documents(documents: List[Document]) -> List[Document]:
@@ -28,8 +38,24 @@ class DocumentService:
         Create multiple documents at once
         """
         created_documents = []
+        
+        # Import inside method to avoid circular imports
+        from app.services.library_service import LibraryService
+        
+        # Track unique library IDs to mark them unindexed only once
+        library_ids = set()
+        
         for document in documents:
-            created_documents.append(create_document(document))
+            created_doc = create_document(document)
+            created_documents.append(created_doc)
+            
+            if created_doc.library_id:
+                library_ids.add(created_doc.library_id)
+        
+        # Mark all affected libraries as not indexed
+        for library_id in library_ids:
+            LibraryService.mark_library_unindexed(library_id)
+            
         return created_documents
     
     @staticmethod
@@ -62,7 +88,28 @@ class DocumentService:
         if "chunks" in document_data:
             raise ValueError("Cannot update chunks through this method. Use update_document_chunks instead.")
         
-        return update_document(document_id, document_data)
+        # Get the document first to check if it exists and to get the library_id
+        document = get_document(document_id)
+        if not document:
+            return None
+            
+        # Update the document
+        updated_doc = update_document(document_id, document_data)
+        
+        # If library_id changed, mark both old and new libraries as not indexed
+        if "library_id" in document_data and document_data["library_id"] != document.library_id:
+            # Import inside method to avoid circular imports
+            from app.services.library_service import LibraryService
+            
+            # Mark old library as not indexed
+            if document.library_id:
+                LibraryService.mark_library_unindexed(document.library_id)
+                
+            # Mark new library as not indexed
+            if document_data["library_id"]:
+                LibraryService.mark_library_unindexed(document_data["library_id"])
+        
+        return updated_doc
     
     @staticmethod
     def update_document_chunks(document_id: UUID, chunks: List[Chunk]) -> Optional[Document]:
@@ -96,6 +143,13 @@ class DocumentService:
             document_data = document.model_dump()
             db.documents[document_id] = document_data
             
+            # Import inside method to avoid circular imports
+            from app.services.library_service import LibraryService
+            
+            # Mark library as not indexed
+            if document.library_id:
+                LibraryService.mark_library_unindexed(document.library_id)
+            
             return document
     
     @staticmethod
@@ -103,4 +157,16 @@ class DocumentService:
         """
         Delete a document and all its chunks (cascade delete)
         """
-        return delete_document(document_id) 
+        # Get the document first to get the library_id
+        document = get_document(document_id)
+        
+        # Delete the document
+        result = delete_document(document_id)
+        
+        # If deletion was successful and we have a library_id, mark it as not indexed
+        if result and document and document.library_id:
+            # Import inside method to avoid circular imports
+            from app.services.library_service import LibraryService
+            LibraryService.mark_library_unindexed(document.library_id)
+        
+        return result 

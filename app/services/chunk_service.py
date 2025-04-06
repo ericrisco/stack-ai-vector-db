@@ -18,10 +18,21 @@ class ChunkService:
         Create a single chunk for a document
         """
         # Verify that the document exists before creating the chunk
-        if not get_document(chunk.document_id):
+        document = get_document(chunk.document_id)
+        if not document:
             raise ValueError(f"Document with ID {chunk.document_id} does not exist")
         
-        return create_chunk(chunk)
+        # Create the chunk
+        created_chunk = create_chunk(chunk)
+        
+        # Import inside method to avoid circular imports
+        from app.services.library_service import LibraryService
+        
+        # Mark the library as not indexed if the document belongs to a library
+        if document.library_id:
+            LibraryService.mark_library_unindexed(document.library_id)
+        
+        return created_chunk
     
     @staticmethod
     def create_chunks(chunks: List[Chunk]) -> List[Chunk]:
@@ -38,13 +49,21 @@ class ChunkService:
                 raise ValueError("All chunks must belong to the same document")
         
         # Verify that the document exists
-        if not get_document(document_id):
+        document = get_document(document_id)
+        if not document:
             raise ValueError(f"Document with ID {document_id} does not exist")
         
         # Create all chunks
         created_chunks = []
         for chunk in chunks:
             created_chunks.append(create_chunk(chunk))
+        
+        # Import inside method to avoid circular imports
+        from app.services.library_service import LibraryService
+        
+        # Mark the library as not indexed if the document belongs to a library
+        if document.library_id:
+            LibraryService.mark_library_unindexed(document.library_id)
         
         return created_chunks
     
@@ -74,11 +93,48 @@ class ChunkService:
         """
         Update an existing chunk
         """
-        return update_chunk(chunk_id, chunk_data)
+        # Get the chunk and document to determine the library
+        chunk = get_chunk(chunk_id)
+        if not chunk:
+            return None
+            
+        document = get_document(chunk.document_id)
+        if not document:
+            return None
+            
+        # Update the chunk
+        updated_chunk = update_chunk(chunk_id, chunk_data)
+        
+        # Import inside method to avoid circular imports
+        from app.services.library_service import LibraryService
+        
+        # Mark the library as not indexed if the document belongs to a library
+        if document.library_id:
+            LibraryService.mark_library_unindexed(document.library_id)
+            
+        return updated_chunk
     
     @staticmethod
     def delete_chunk(chunk_id: UUID) -> bool:
         """
         Delete a chunk
         """
-        return delete_chunk(chunk_id) 
+        # Get the chunk and document to determine the library
+        chunk = get_chunk(chunk_id)
+        if not chunk:
+            return False
+            
+        document = get_document(chunk.document_id)
+        if not document:
+            return False
+            
+        # Delete the chunk
+        result = delete_chunk(chunk_id)
+        
+        # If deletion was successful and the document belongs to a library, mark it as not indexed
+        if result and document.library_id:
+            # Import inside method to avoid circular imports
+            from app.services.library_service import LibraryService
+            LibraryService.mark_library_unindexed(document.library_id)
+            
+        return result 
