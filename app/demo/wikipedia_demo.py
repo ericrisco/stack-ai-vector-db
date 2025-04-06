@@ -12,7 +12,7 @@ from app.models.chunk import Chunk
 from app.services.library_service import LibraryService
 from app.services.document_service import DocumentService
 from app.services.embedding_service import EmbeddingService
-from app.indexer import BruteForceIndexer
+from app.indexer import BruteForceIndexer, BallTreeIndexer
 from app.indexer.indexer_interface import VectorIndexer
 
 class WikipediaDemo:
@@ -187,17 +187,22 @@ class WikipediaDemo:
         
         return results
 
-async def run_demo(indexer_name: str = "brute_force", chunk_size: int = 150):
+async def run_demo(indexer_name: str = "brute_force", chunk_size: int = 150, leaf_size: int = 40):
     """
     Run the Wikipedia demo with the specified indexer
     
     Args:
-        indexer_name: Name of the indexer to use (currently only 'brute_force' is supported)
+        indexer_name: Name of the indexer to use ('brute_force' or 'ball_tree')
         chunk_size: Size of text chunks to create
+        leaf_size: Size of leaf nodes for Ball Tree indexer
     """
     # Select the indexer based on the name
     if indexer_name.lower() == "brute_force":
         indexer = BruteForceIndexer()
+        print(f"Using BruteForceIndexer")
+    elif indexer_name.lower() == "ball_tree":
+        indexer = BallTreeIndexer(leaf_size=leaf_size)
+        print(f"Using BallTreeIndexer with leaf_size={leaf_size}")
     else:
         print(f"Unknown indexer: {indexer_name}. Using BruteForceIndexer.")
         indexer = BruteForceIndexer()
@@ -228,11 +233,17 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Run Wikipedia indexer demo")
     parser.add_argument("--indexer", type=str, default="brute_force", 
-                        help="Indexer to use (currently only 'brute_force' is supported)")
+                        help="Indexer to use ('brute_force' or 'ball_tree')")
     parser.add_argument("--chunk-size", type=int, default=150,
                         help="Size of text chunks to create")
+    parser.add_argument("--leaf-size", type=int, default=40,
+                        help="Size of leaf nodes for Ball Tree indexer")
     
     args = parser.parse_args()
     
     # Run the demo with the specified indexer
-    asyncio.run(run_demo(indexer_name=args.indexer, chunk_size=args.chunk_size)) 
+    asyncio.run(run_demo(
+        indexer_name=args.indexer, 
+        chunk_size=args.chunk_size,
+        leaf_size=args.leaf_size
+    )) 
