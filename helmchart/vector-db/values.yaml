@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  repository: vector-db
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+# Health check configuration
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    successThreshold: 1
+    failureThreshold: 3
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Set this to true if you want to use a LoadBalancer service
+# Only works on cloud providers that support LoadBalancer
+useLoadBalancer: false
+
+# Environment variables
+env:
+  DATA_DIR: /app/data
+  TESTING_DATA: false
+  # COHERE_API_KEY should be set separately for security
+
+# Persistence configuration
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: "" 
