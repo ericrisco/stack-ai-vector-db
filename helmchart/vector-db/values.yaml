@@ -10,6 +10,22 @@ service:
   port: 8000
   targetPort: 8000
 
+# Health check configuration
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    successThreshold: 1
+    failureThreshold: 3
+
 resources:
   limits:
     cpu: 500m
