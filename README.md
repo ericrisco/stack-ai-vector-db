@@ -14,6 +14,7 @@ A FastAPI service for efficient vector database operations with multiple indexin
 - [Indexing Algorithms](#indexing-algorithms)
 - [Concurrency and Thread Safety](#concurrency-and-thread-safety)
 - [CRUD Operations & Data Flow](#crud-operations--data-flow)
+- [Automatic Data Loading on Startup](#automatic-data-loading-on-startup)
 - [API Workflow](#api-workflow)
 - [Persistence Implementation](#persistence-implementation)
 - [Testing](#testing)
@@ -266,6 +267,26 @@ Data flow follows a clean, cascading pattern:
 - Deleting a library automatically deletes its documents and their chunks
 - Updating a document or chunk marks the library as not indexed
 - Library operations like search automatically use the appropriate indexer
+
+## Automatic Data Loading on Startup
+
+Thanks to the persistence system, every time the application starts, it automatically loads all vector libraries stored as JSON files in the `/data` directory. This gives you immediate access to your previously created libraries without having to recreate them.
+
+The project includes a pre-built vector database about Andorra with the following structure:
+- 1 library named "Andorra"
+- 5 documents covering different aspects (Overview, History, Tourism, Geography, Culture) 
+- 23 text chunks with factual information
+
+This test database is automatically loaded on startup if the `TESTING_DATA` environment variable is set to `true` in your `.env` file:
+
+```
+TESTING_DATA=true
+TESTING_DATA_FILE=app/data/library_a1b2c3d4-e5f6-7890-9101-1a2b3c4d5e6f.json
+```
+
+If you want to disable loading this test database, simply set `TESTING_DATA=false` in your `.env` file or remove these environment variables.
+
+This automatic loading feature makes the application ready-to-use immediately after startup and allows you to experiment with search functionality without having to create your own data first.
 
 ## API Workflow
 
