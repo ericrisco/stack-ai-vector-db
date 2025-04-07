@@ -9,6 +9,7 @@ A FastAPI service for efficient vector database operations with multiple indexin
   - [Local Installation](#local-installation)
   - [Docker Installation](#docker-installation)
   - [Docker Compose](#docker-compose)
+  - [Kubernetes Deployment](#kubernetes-deployment)
 - [Database Model](#database-model)
 - [Indexing Algorithms](#indexing-algorithms)
 - [Concurrency and Thread Safety](#concurrency-and-thread-safety)
@@ -105,6 +106,61 @@ Stack AI Vector DB is a specialized service for managing vector databases that e
    ```bash
    TESTING_DATA=true docker-compose up
    ```
+
+### Kubernetes Deployment
+
+For deploying to a Kubernetes cluster like Minikube, this project includes a Helm chart in the `helmchart/` directory.
+
+1. **Build and push the Docker image**:
+   ```bash
+   docker build -t your-username/vector-db:latest .
+   docker push your-username/vector-db:latest
+   ```
+
+2. **Update the image repository in values.yaml**:
+   ```yaml
+   image:
+     repository: your-username/vector-db
+     tag: latest
+   ```
+
+3. **Install the Helm chart**:
+   ```bash
+   # Create base64 encoded API key
+   COHERE_API_KEY_B64=$(echo -n "your-actual-api-key" | base64)
+
+   # Install the chart
+   helm install vector-db ./helmchart/vector-db --set cohereApiKey=$COHERE_API_KEY_B64
+   ```
+
+4. **Access the service in Minikube**:
+   ```bash
+   minikube service vector-db --url
+   ```
+
+#### Health and Readiness Probes
+
+The Kubernetes deployment includes health monitoring via probes that connect to the application's `/health` endpoint:
+
+- **Liveness Probe**: Verifies the application is running and responsive. If this probe fails, Kubernetes automatically restarts the container.
+  - Initial delay: 30 seconds after container starts
+  - Check frequency: Every 10 seconds
+  - Timeout: 5 seconds per check
+  - Failure threshold: 3 consecutive failures trigger a restart
+
+- **Readiness Probe**: Determines if the application is ready to receive traffic. Until this probe succeeds, the pod won't receive requests.
+  - Initial delay: 5 seconds after container starts
+  - Check frequency: Every 10 seconds
+  - Timeout: 2 seconds per check
+  - Success threshold: 1 successful check to mark as ready
+  - Failure threshold: 3 failures to mark as not ready
+
+These probes ensure high availability by:
+- Automatically restarting unhealthy containers
+- Routing traffic only to healthy instances
+- Enabling smoother rolling updates during deployments
+
+All probe settings can be customized in the Helm chart's `values.yaml` file.
 
 ## Database Model
 
